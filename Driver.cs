@@ -25,7 +25,6 @@ public class Driver : Game
         GraphicsDevice.DepthStencilState = DepthStencilState.Default;
         GraphicsDevice.RasterizerState = new RasterizerState { CullMode = CullMode.CullCounterClockwiseFace };
 
-
         base.Initialize();
     }
 
@@ -56,6 +55,13 @@ public class Driver : Game
         _renderables.Add(sphere);
         _renderables.Add(pyramid);
         _renderables.Add(prism);
+
+        // configure a single directional light and ambient for all renderables
+        var lightDir = new Vector3(-0.5f, -1f, -0.3f);
+        var diffuse = new Vector3(1f, 1f, 1f);
+        var spec = new Vector3(0.3f, 0.3f, 0.3f);
+        var ambient = new Vector3(0.18f, 0.18f, 0.18f);
+        foreach (var r in _renderables) r.SetDirectionalLight(lightDir, diffuse, spec, ambient);
 
         // precompute view/projection matrices (not recalculated every frame)
         _view = Matrix.CreateLookAt(new Vector3(0, 0, 6f), Vector3.Zero, Vector3.Up);

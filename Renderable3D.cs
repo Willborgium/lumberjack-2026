@@ -5,47 +5,49 @@ namespace Lumberjack;
 
 public class Renderable3D
 {
-    private readonly VertexPositionColor[] _vertices;
+    private readonly VertexPositionNormalColor[] _vertices;
     private readonly short[] _indices;
     private readonly BasicEffect _effect;
 
-    private Microsoft.Xna.Framework.Vector3 _position = Microsoft.Xna.Framework.Vector3.Zero;
-    private Microsoft.Xna.Framework.Vector3 _rotation = Microsoft.Xna.Framework.Vector3.Zero; // pitch(x), yaw(y), roll(z)
-    private Microsoft.Xna.Framework.Vector3 _scale = new Microsoft.Xna.Framework.Vector3(1f,1f,1f);
+    private Vector3 _position = Vector3.Zero;
+    private Vector3 _rotation = Vector3.Zero; // pitch(x), yaw(y), roll(z)
+    private Vector3 _scale = new Vector3(1f, 1f, 1f);
 
     private Matrix _worldCache = Matrix.Identity;
     private bool _dirty = true;
 
-    public Microsoft.Xna.Framework.Vector3 Position
+    public Vector3 Position
     {
         get => _position;
         set { if (_position != value) { _position = value; _dirty = true; } }
     }
 
-    public Microsoft.Xna.Framework.Vector3 Rotation
+    public Vector3 Rotation
     {
         get => _rotation;
         set { if (_rotation != value) { _rotation = value; _dirty = true; } }
     }
 
-    public Microsoft.Xna.Framework.Vector3 Scale
+    public Vector3 Scale
     {
         get => _scale;
         set { if (_scale != value) { _scale = value; _dirty = true; } }
     }
 
-    public Matrix World {
+    public Matrix World
+    {
         get { if (_dirty) RecalculateWorld(); return _worldCache; }
     }
 
-    public Renderable3D(GraphicsDevice graphicsDevice, VertexPositionColor[] vertices, short[] indices)
+    public Renderable3D(GraphicsDevice graphicsDevice, VertexPositionNormalColor[] vertices, short[] indices)
     {
         _vertices = vertices;
         _indices = indices;
         _effect = new BasicEffect(graphicsDevice)
         {
             VertexColorEnabled = true,
-            LightingEnabled = false
+            LightingEnabled = true,
+            SpecularPower = 16f
         };
     }
 
@@ -58,6 +60,17 @@ public class Renderable3D
         _dirty = false;
     }
 
+    public void SetDirectionalLight(Vector3 direction, Vector3 diffuseColor, Vector3 specularColor, Vector3 ambientColor)
+    {
+        _effect.LightingEnabled = true;
+        _effect.EnableDefaultLighting();
+        _effect.DirectionalLight0.Enabled = true;
+        _effect.DirectionalLight0.Direction = Vector3.Normalize(direction);
+        _effect.DirectionalLight0.DiffuseColor = diffuseColor;
+        _effect.DirectionalLight0.SpecularColor = specularColor;
+        _effect.AmbientLightColor = ambientColor;
+    }
+
     public void Draw(GraphicsDevice graphicsDevice, Matrix view, Matrix projection)
     {
         _effect.World = World;
@@ -67,7 +80,7 @@ public class Renderable3D
         foreach (var pass in _effect.CurrentTechnique.Passes)
         {
             pass.Apply();
-            graphicsDevice.DrawUserIndexedPrimitives<VertexPositionColor>(
+            graphicsDevice.DrawUserIndexedPrimitives<VertexPositionNormalColor>(
                 PrimitiveType.TriangleList,
                 _vertices, 0, _vertices.Length,
                 _indices, 0, _indices.Length / 3);
