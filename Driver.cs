@@ -12,6 +12,7 @@ public class Driver : Game
     private List<Renderable3D> _renderables = new List<Renderable3D>();
     private Matrix _view;
     private Matrix _projection;
+    private BasicEffect _effect;
 
     public Driver()
     {
@@ -34,16 +35,16 @@ public class Driver : Game
 
         // create four renderables: cube, sphere, pyramid, rectangular prism
         var (cubeVerts, cubeInds) = TestFunctions.CreateCube();
-        var cube = new Renderable3D(GraphicsDevice, cubeVerts, cubeInds);
+        var cube = new Renderable3D(cubeVerts, cubeInds);
 
         var (sphereVerts, sphereInds) = TestFunctions.CreateSphere(stacks: 10, slices: 14, radius: 0.9f);
-        var sphere = new Renderable3D(GraphicsDevice, sphereVerts, sphereInds);
+        var sphere = new Renderable3D(sphereVerts, sphereInds);
 
         var (pyramidVerts, pyramidInds) = TestFunctions.CreatePyramid(size: 0.9f, height: 1.4f);
-        var pyramid = new Renderable3D(GraphicsDevice, pyramidVerts, pyramidInds);
+        var pyramid = new Renderable3D(pyramidVerts, pyramidInds);
 
         var (prismVerts, prismInds) = TestFunctions.CreateRectangularPrism(width: 1.6f, height: 0.8f, depth: 0.6f);
-        var prism = new Renderable3D(GraphicsDevice, prismVerts, prismInds);
+        var prism = new Renderable3D(prismVerts, prismInds);
 
         // position them in the scene using Position property
         cube.Position = new Vector3(-2.2f, 0f, 0f);
@@ -56,16 +57,25 @@ public class Driver : Game
         _renderables.Add(pyramid);
         _renderables.Add(prism);
 
-        // configure a single directional light and ambient for all renderables
-        var lightDir = new Vector3(-0.5f, -1f, -0.3f);
-        var diffuse = new Vector3(1f, 1f, 1f);
-        var spec = new Vector3(0.3f, 0.3f, 0.3f);
-        var ambient = new Vector3(0.18f, 0.18f, 0.18f);
-        foreach (var r in _renderables) r.SetDirectionalLight(lightDir, diffuse, spec, ambient);
-
         // precompute view/projection matrices (not recalculated every frame)
         _view = Matrix.CreateLookAt(new Vector3(0, 0, 6f), Vector3.Zero, Vector3.Up);
         _projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(45f), GraphicsDevice.Viewport.AspectRatio, 0.1f, 100f);
+
+        // create and configure shared BasicEffect for lighting
+        _effect = new BasicEffect(GraphicsDevice)
+        {
+            VertexColorEnabled = true,
+            LightingEnabled = true,
+            SpecularPower = 16f,
+            View = _view,
+            Projection = _projection
+        };
+        _effect.EnableDefaultLighting();
+        _effect.DirectionalLight0.Enabled = true;
+        _effect.DirectionalLight0.Direction = Vector3.Normalize(new Vector3(-0.5f, -1f, -0.3f));
+        _effect.DirectionalLight0.DiffuseColor = new Vector3(1f, 1f, 1f);
+        _effect.DirectionalLight0.SpecularColor = new Vector3(0.3f, 0.3f, 0.3f);
+        _effect.AmbientLightColor = new Vector3(0.18f, 0.18f, 0.18f);
     }
 
     protected override void Update(GameTime gameTime)
@@ -81,10 +91,13 @@ public class Driver : Game
 
         if (_renderables != null && _renderables.Count > 0)
         {
+            // use shared effect: view/projection already set on _effect
+            int idx = 0;
             foreach (var r in _renderables)
             {
                 r.Rotation += new Vector3(0.01f, 0.02f, 0.03f);
-                r.Draw(GraphicsDevice, _view, _projection);
+                r.Draw(_effect, GraphicsDevice);
+                idx++;
             }
         }
 

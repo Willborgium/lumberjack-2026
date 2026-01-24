@@ -7,7 +7,6 @@ public class Renderable3D
 {
     private readonly VertexPositionNormalColor[] _vertices;
     private readonly short[] _indices;
-    private readonly BasicEffect _effect;
 
     private Vector3 _position = Vector3.Zero;
     private Vector3 _rotation = Vector3.Zero; // pitch(x), yaw(y), roll(z)
@@ -39,16 +38,10 @@ public class Renderable3D
         get { if (_dirty) RecalculateWorld(); return _worldCache; }
     }
 
-    public Renderable3D(GraphicsDevice graphicsDevice, VertexPositionNormalColor[] vertices, short[] indices)
+    public Renderable3D(VertexPositionNormalColor[] vertices, short[] indices)
     {
         _vertices = vertices;
         _indices = indices;
-        _effect = new BasicEffect(graphicsDevice)
-        {
-            VertexColorEnabled = true,
-            LightingEnabled = true,
-            SpecularPower = 16f
-        };
     }
 
     private void RecalculateWorld()
@@ -60,24 +53,13 @@ public class Renderable3D
         _dirty = false;
     }
 
-    public void SetDirectionalLight(Vector3 direction, Vector3 diffuseColor, Vector3 specularColor, Vector3 ambientColor)
+    // Draw using a shared BasicEffect. The driver should configure effect.View, effect.Projection
+    // and lighting once; here we only set World and issue the draw calls.
+    public void Draw(BasicEffect effect, GraphicsDevice graphicsDevice)
     {
-        _effect.LightingEnabled = true;
-        _effect.EnableDefaultLighting();
-        _effect.DirectionalLight0.Enabled = true;
-        _effect.DirectionalLight0.Direction = Vector3.Normalize(direction);
-        _effect.DirectionalLight0.DiffuseColor = diffuseColor;
-        _effect.DirectionalLight0.SpecularColor = specularColor;
-        _effect.AmbientLightColor = ambientColor;
-    }
+        effect.World = World;
 
-    public void Draw(GraphicsDevice graphicsDevice, Matrix view, Matrix projection)
-    {
-        _effect.World = World;
-        _effect.View = view;
-        _effect.Projection = projection;
-
-        foreach (var pass in _effect.CurrentTechnique.Passes)
+        foreach (var pass in effect.CurrentTechnique.Passes)
         {
             pass.Apply();
             graphicsDevice.DrawUserIndexedPrimitives<VertexPositionNormalColor>(
