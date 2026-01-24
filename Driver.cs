@@ -10,10 +10,8 @@ public class Driver : Game
     private GraphicsDeviceManager _graphics;
     private SpriteBatch _spriteBatch;
     private List<Renderable3D> _renderables = new List<Renderable3D>();
-    private List<Matrix> _baseWorlds = new List<Matrix>();
     private Matrix _view;
     private Matrix _projection;
-    private float _angle;
 
     public Driver()
     {
@@ -24,6 +22,9 @@ public class Driver : Game
 
     protected override void Initialize()
     {
+        GraphicsDevice.DepthStencilState = DepthStencilState.Default;
+        GraphicsDevice.RasterizerState = new RasterizerState { CullMode = CullMode.CullCounterClockwiseFace };
+
 
         base.Initialize();
     }
@@ -45,26 +46,16 @@ public class Driver : Game
         var (prismVerts, prismInds) = TestFunctions.CreateRectangularPrism(width: 1.6f, height: 0.8f, depth: 0.6f);
         var prism = new Renderable3D(GraphicsDevice, prismVerts, prismInds);
 
-        // position them in the scene and record base transforms
-        var cubeBase = Matrix.CreateTranslation(new Vector3(-2.2f, 0f, 0f));
-        var sphereBase = Matrix.CreateTranslation(new Vector3(2.2f, 0f, 0f));
-        var pyramidBase = Matrix.CreateTranslation(new Vector3(0f, 1.6f, 0f));
-        var prismBase = Matrix.CreateTranslation(new Vector3(0f, -1.6f, 0f));
-
-        cube.World = cubeBase;
-        sphere.World = sphereBase;
-        pyramid.World = pyramidBase;
-        prism.World = prismBase;
+        // position them in the scene using Position property
+        cube.Position = new Vector3(-2.2f, 0f, 0f);
+        sphere.Position = new Vector3(2.2f, 0f, 0f);
+        pyramid.Position = new Vector3(0f, 1.6f, 0f);
+        prism.Position = new Vector3(0f, -1.6f, 0f);
 
         _renderables.Add(cube);
         _renderables.Add(sphere);
         _renderables.Add(pyramid);
         _renderables.Add(prism);
-
-        _baseWorlds.Add(cubeBase);
-        _baseWorlds.Add(sphereBase);
-        _baseWorlds.Add(pyramidBase);
-        _baseWorlds.Add(prismBase);
 
         // precompute view/projection matrices (not recalculated every frame)
         _view = Matrix.CreateLookAt(new Vector3(0, 0, 6f), Vector3.Zero, Vector3.Up);
@@ -75,10 +66,6 @@ public class Driver : Game
     {
         if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
             Exit();
-
-        // simple rotation
-        _angle += (float)gameTime.ElapsedGameTime.TotalSeconds * 0.8f;
-
         base.Update(gameTime);
     }
 
@@ -88,20 +75,10 @@ public class Driver : Game
 
         if (_renderables != null && _renderables.Count > 0)
         {
-            GraphicsDevice.DepthStencilState = DepthStencilState.Default;
-            GraphicsDevice.RasterizerState = new RasterizerState { CullMode = CullMode.CullCounterClockwiseFace };
-
-            var view = _view;
-            var proj = _projection;
-
-            // draw each with a small rotation
-            for (int i = 0; i < _renderables.Count; i++)
+            foreach (var r in _renderables)
             {
-                var r = _renderables[i];
-                var baseWorld = _baseWorlds[i];
-                var rot = Matrix.CreateRotationY(_angle * (1f + i * 0.15f)) * Matrix.CreateRotationX(_angle * 0.5f);
-                r.World = rot * baseWorld;
-                r.Draw(GraphicsDevice, view, proj);
+                r.Rotation += new Vector3(0.01f, 0.02f, 0.03f);
+                r.Draw(GraphicsDevice, _view, _projection);
             }
         }
 
