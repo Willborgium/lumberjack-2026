@@ -1,0 +1,89 @@
+# .gitignore for C# / .NET / Visual Studio / MonoGame projects
+
+# Visual Studio temporary files, build results, and
+# user-specific files
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build outputs
+bin/
+obj/
+Debug/
+Release/
+publish/
+artifacts/
+
+# MonoGame Content Pipeline generated folders
+Content/obj/
+Content/bin/
+bin/**/Content/
+obj/**/Content/
+
+# Rider
+.idea/
+*.sln.iml
+
+# VS Code
+.vscode/
+
+# NuGet
+packages/
+*.nupkg
+project.assets.json
+
+# Mono and Windows
+*.dll
+*.exe
+*.pdb
+*.mdb
+*.ilk
+*.exp
+
+# Generated files
+*.g.cs
+*.g.i.cs
+*.Designer.cs
+
+# OS files
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Logs
+*.log
+
+# User-specific / secret files
+secrets.json
+appsettings.Development.json
+*.usersecrets
+
+# Temporary files
+*.tmp
+~*$
+
+# JetBrains Rider caches
+.idea/
+.idea/**/workspace.xml
+
+# Package directories
+.vs/
+
+# Ignore generated NuGet props/targets produced by restore
+**/*.nuget.g.props
+**/*.nuget.g.targets
+
+# Ignore msbuild generated files
+*.FileListAbsolute.txt
+
+# Ignore publish and runtime files
+publish/
+*.runtimeconfig.json
+*.deps.json
+
+# Keep the source Content/Content.mgcb but ignore its generated outputs
+Content/Content.mgcb
+
+# End of .gitignore
