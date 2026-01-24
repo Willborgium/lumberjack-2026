@@ -7,39 +7,101 @@ namespace Lumberjack;
 
 public static class TestFunctions
 {
-    public static (VertexPositionNormalColor[] vertices, short[] indices) CreateCube()
+    public static (VertexPositionNormalColor[] vertices, short[] indices) CreateCube(int divisions = 2, float size = 1f)
     {
-        var positions = new Vector3[8];
-        float s = 1f;
-        positions[0] = new Vector3(-s, -s, -s);
-        positions[1] = new Vector3(s, -s, -s);
-        positions[2] = new Vector3(s, s, -s);
-        positions[3] = new Vector3(-s, s, -s);
-        positions[4] = new Vector3(-s, -s, s);
-        positions[5] = new Vector3(s, -s, s);
-        positions[6] = new Vector3(s, s, s);
-        positions[7] = new Vector3(-s, s, s);
+        // Create subdivided cube by generating a grid on each face and sharing vertices at same positions
+        int div = Math.Max(1, divisions);
+        float half = size * 0.5f;
 
-        var colors = new Color[8];
-        colors[0] = Color.Red;
-        colors[1] = Color.Green;
-        colors[2] = Color.Blue;
-        colors[3] = Color.Yellow;
-        colors[4] = Color.Cyan;
-        colors[5] = Color.Magenta;
-        colors[6] = Color.White;
-        colors[7] = Color.Orange;
+        var positionsList = new List<Vector3>();
+        var colorsList = new List<Color>();
+        var indicesList = new List<short>();
+        var indexMap = new Dictionary<string, short>();
 
-        var indices = new short[]
+        // Helper to get shared vertex index by position
+        short GetIndex(Vector3 pos, Color col)
         {
-            0,1,2, 0,2,3,
-            4,6,5, 4,7,6,
-            4,3,7, 4,0,3,
-            1,5,6, 1,6,2,
-            3,2,6, 3,6,7,
-            4,5,1, 4,1,0
+            string key = $"{pos.X:F6}|{pos.Y:F6}|{pos.Z:F6}";
+            if (indexMap.TryGetValue(key, out var idx)) return idx;
+            idx = (short)positionsList.Count;
+            positionsList.Add(pos);
+            colorsList.Add(col);
+            indexMap[key] = idx;
+            return idx;
+        }
+
+        // define faces as center + two axes
+        (Vector3 center, Vector3 u, Vector3 v, Color color)[] faces = new[]
+        {
+            // front (+Z)
+            (new Vector3(0,0,half), new Vector3(1,0,0) * size, new Vector3(0,1,0) * size, Color.CornflowerBlue),
+            // back (-Z)
+            (new Vector3(0,0,-half), new Vector3(-1,0,0) * size, new Vector3(0,1,0) * size, Color.CadetBlue),
+            // right (+X)
+            (new Vector3(half,0,0), new Vector3(0,0,-1) * size, new Vector3(0,1,0) * size, Color.LightGreen),
+            // left (-X)
+            (new Vector3(-half,0,0), new Vector3(0,0,1) * size, new Vector3(0,1,0) * size, Color.Gold),
+            // top (+Y)
+            (new Vector3(0,half,0), new Vector3(1,0,0) * size, new Vector3(0,0,-1) * size, Color.OrangeRed),
+            // bottom (-Y)
+            (new Vector3(0,-half,0), new Vector3(1,0,0) * size, new Vector3(0,0,1) * size, Color.MediumPurple),
         };
 
+        for (int f = 0; f < faces.Length; f++)
+        {
+            var face = faces[f];
+            for (int iy = 0; iy <= div; iy++)
+            {
+                float vy = (iy / (float)div - 0.5f);
+                for (int ix = 0; ix <= div; ix++)
+                {
+                    float vx = (ix / (float)div - 0.5f);
+                    var pos = face.center + face.u * vx + face.v * vy;
+                    var col = face.color;
+                    GetIndex(pos, col);
+                }
+            }
+
+            // create indices for this face grid
+            int row = div + 1;
+            // build temporary mapping from (ix,iy) to index
+            short[,] map = new short[row, row];
+            int counter = 0;
+            for (int iy = 0; iy <= div; iy++)
+            {
+                float vy = (iy / (float)div - 0.5f);
+                for (int ix = 0; ix <= div; ix++)
+                {
+                    float vx = (ix / (float)div - 0.5f);
+                    var pos = face.center + face.u * vx + face.v * vy;
+                    map[ix, iy] = GetIndex(pos, face.color);
+                    counter++;
+                }
+            }
+
+            for (int iy = 0; iy < div; iy++)
+            {
+                for (int ix = 0; ix < div; ix++)
+                {
+                    short a = map[ix, iy];
+                    short b = map[ix + 1, iy];
+                    short c = map[ix + 1, iy + 1];
+                    short d = map[ix, iy + 1];
+                    // two triangles: a,b,c and a,c,d
+                    indicesList.Add(a);
+                    indicesList.Add(b);
+                    indicesList.Add(c);
+
+                    indicesList.Add(a);
+                    indicesList.Add(c);
+                    indicesList.Add(d);
+                }
+            }
+        }
+
+        var positions = positionsList.ToArray();
+        var colors = colorsList.ToArray();
+        var indices = indicesList.ToArray();
         var normals = ComputeNormals(positions, indices);
         var verts = new VertexPositionNormalColor[positions.Length];
         for (int i = 0; i < positions.Length; i++) verts[i] = new VertexPositionNormalColor(positions[i], normals[i], colors[i]);
