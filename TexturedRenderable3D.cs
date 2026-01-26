@@ -1,16 +1,16 @@
-using System.Drawing;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace Lumberjack;
 
-public class Renderable3D
+public class TexturedRenderable3D
 {
-    private readonly VertexPositionNormalColor[] _vertices;
+    private readonly VertexPositionNormalTextureColor[] _vertices;
     private readonly short[] _indices;
+    private Texture2D _texture;
 
     private Vector3 _position = Vector3.Zero;
-    private Vector3 _rotation = Vector3.Zero; // pitch(x), yaw(y), roll(z)
+    private Vector3 _rotation = Vector3.Zero;
     private Vector3 _scale = Vector3.One;
 
     private Matrix _worldCache = Matrix.Identity;
@@ -39,10 +39,11 @@ public class Renderable3D
         get { if (_dirty) RecalculateWorld(); return _worldCache; }
     }
 
-    public Renderable3D(VertexPositionNormalColor[] vertices, short[] indices)
+    public TexturedRenderable3D(VertexPositionNormalTextureColor[] vertices, short[] indices, Texture2D texture)
     {
         _vertices = vertices;
         _indices = indices;
+        _texture = texture;
     }
 
     private void RecalculateWorld()
@@ -54,19 +55,22 @@ public class Renderable3D
         _dirty = false;
     }
 
-    // Draw using a shared BasicEffect. The driver should configure effect.View, effect.Projection
-    // and lighting once; here we only set World and issue the draw calls.
     public void Draw(BasicEffect effect, GraphicsDevice graphicsDevice)
     {
         effect.World = World;
+        // enable and bind texture for this draw
+        effect.TextureEnabled = true;
+        effect.Texture = _texture;
 
         foreach (var pass in effect.CurrentTechnique.Passes)
         {
             pass.Apply();
-            graphicsDevice.DrawUserIndexedPrimitives<VertexPositionNormalColor>(
+            graphicsDevice.DrawUserIndexedPrimitives<VertexPositionNormalTextureColor>(
                 PrimitiveType.TriangleList,
                 _vertices, 0, _vertices.Length,
                 _indices, 0, _indices.Length / 3);
         }
+
+        // leave effect.TextureEnabled true; caller may disable if needed
     }
 }

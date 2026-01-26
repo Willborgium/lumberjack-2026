@@ -15,6 +15,7 @@ public class GameState : IState
     private GraphicsDevice? _graphicsDevice;
     private ContentManager? _content;
     private bool _exitRequested = false;
+    private TexturedRenderable3D? _texturedCube;
 
     public bool IsExitRequested => _exitRequested;
 
@@ -23,8 +24,20 @@ public class GameState : IState
         _content = content;
         _graphicsDevice = graphicsDevice;
 
-        var (cubeVerts, cubeInds) = TestFunctions.CreateCube();
-        var cube = new Renderable3D(cubeVerts, cubeInds);
+        var (cubeVerts, cubeInds, _) = TestFunctions.CreateTexturedCube();
+        Texture2D cubeTexture;
+        try
+        {
+            cubeTexture = content.Load<Texture2D>("grass");
+        }
+        catch
+        {
+            // fallback to loading directly from file if content pipeline isn't available
+            var path = System.IO.Path.Combine(content.RootDirectory, "grass.jpg");
+            using var fs = System.IO.File.OpenRead(path);
+            cubeTexture = Texture2D.FromStream(graphicsDevice, fs);
+        }
+        var cube = new TexturedRenderable3D(cubeVerts, cubeInds, cubeTexture);
 
         var (sphereVerts, sphereInds) = TestFunctions.CreateSphere(stacks: 10, slices: 14, radius: 0.9f);
         var sphere = new Renderable3D(sphereVerts, sphereInds);
@@ -40,7 +53,7 @@ public class GameState : IState
         pyramid.Position = new Vector3(0f, 1.6f, 0f);
         prism.Position = new Vector3(0f, -1.6f, 0f);
 
-        _renderables.Add(cube);
+        _texturedCube = cube;
         _renderables.Add(sphere);
         _renderables.Add(pyramid);
         _renderables.Add(prism);
@@ -76,6 +89,9 @@ public class GameState : IState
             return;
         }
 
+        // rotate textured cube if present
+        if (_texturedCube != null) _texturedCube.Rotation += new Vector3(0.01f, 0.02f, 0.03f);
+
         foreach (var r in _renderables)
         {
             r.Rotation += new Vector3(0.01f, 0.02f, 0.03f);
@@ -86,7 +102,18 @@ public class GameState : IState
     {
         graphicsDevice.Clear(Color.CornflowerBlue);
 
-        if (_renderables != null && _renderables.Count > 0 && _effect != null)
+        if (_effect == null) return;
+
+        // draw textured cube first (enables texture on effect)
+        if (_texturedCube != null)
+        {
+            _texturedCube.Draw(_effect, graphicsDevice);
+        }
+
+        // disable texture for non-textured renderables
+        _effect.TextureEnabled = false;
+
+        if (_renderables != null && _renderables.Count > 0)
         {
             foreach (var r in _renderables)
             {

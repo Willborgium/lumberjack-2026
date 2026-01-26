@@ -176,10 +176,10 @@ public static class TestFunctions
         var idx = new short[]
         {
             0,1,2, 0,2,3,
-            0,1,4,
-            1,2,4,
-            2,3,4,
-            3,0,4
+            4,1,0,
+            4,2,1,
+            4,3,2,
+            4,0,3
         };
 
         var normals = ComputeNormals(positions, idx);
@@ -187,6 +187,48 @@ public static class TestFunctions
         for (int i = 0; i < positions.Length; i++) verts[i] = new VertexPositionNormalColor(positions[i], normals[i], colors[i]);
         return (verts, idx);
     }
+
+    public static (VertexPositionNormalTextureColor[] vertices, short[] indices, TextureCoordInfo) CreateTexturedCube(float size = 1f)
+    {
+        // create 6 faces * 4 verts = 24 vertices so each face can have independent UVs
+        float half = size * 0.5f;
+        var verts = new VertexPositionNormalTextureColor[24];
+        var inds = new short[36];
+
+        // helper to set face
+        void SetFace(int faceIndex, Vector3 center, Vector3 u, Vector3 v, Vector3 normal, Color color)
+        {
+            int baseVert = faceIndex * 4;
+            // uv layout: (0,0),(1,0),(1,1),(0,1)
+            verts[baseVert + 0] = new VertexPositionNormalTextureColor(center - u * 0.5f - v * 0.5f, normal, new Vector2(0, 1), color);
+            verts[baseVert + 1] = new VertexPositionNormalTextureColor(center + u * 0.5f - v * 0.5f, normal, new Vector2(1, 1), color);
+            verts[baseVert + 2] = new VertexPositionNormalTextureColor(center + u * 0.5f + v * 0.5f, normal, new Vector2(1, 0), color);
+            verts[baseVert + 3] = new VertexPositionNormalTextureColor(center - u * 0.5f + v * 0.5f, normal, new Vector2(0, 0), color);
+
+            int ib = faceIndex * 6;
+            // two triangles (0,1,2) and (0,2,3) winding counter-clockwise when looking at the face
+            inds[ib + 0] = (short)(baseVert + 0);
+            inds[ib + 1] = (short)(baseVert + 1);
+            inds[ib + 2] = (short)(baseVert + 2);
+            inds[ib + 3] = (short)(baseVert + 0);
+            inds[ib + 4] = (short)(baseVert + 2);
+            inds[ib + 5] = (short)(baseVert + 3);
+        }
+
+        // faces: front(+Z), back(-Z), right(+X), left(-X), top(+Y), bottom(-Y)
+        SetFace(0, new Vector3(0, 0, half), new Vector3(size, 0, 0), new Vector3(0, size, 0), new Vector3(0, 0, 1), Color.CornflowerBlue);
+        SetFace(1, new Vector3(0, 0, -half), new Vector3(-size, 0, 0), new Vector3(0, size, 0), new Vector3(0, 0, -1), Color.CadetBlue);
+        SetFace(2, new Vector3(half, 0, 0), new Vector3(0, 0, -size), new Vector3(0, size, 0), new Vector3(1, 0, 0), Color.LightGreen);
+        SetFace(3, new Vector3(-half, 0, 0), new Vector3(0, 0, size), new Vector3(0, size, 0), new Vector3(-1, 0, 0), Color.Gold);
+        SetFace(4, new Vector3(0, half, 0), new Vector3(size, 0, 0), new Vector3(0, 0, -size), new Vector3(0, 1, 0), Color.OrangeRed);
+        SetFace(5, new Vector3(0, -half, 0), new Vector3(size, 0, 0), new Vector3(0, 0, size), new Vector3(0, -1, 0), Color.MediumPurple);
+
+        // return minimal extra info for consumers if needed
+        return (verts, inds, new TextureCoordInfo());
+    }
+
+    // placeholder to return extra texture info in future (kept for API compatibility)
+    public struct TextureCoordInfo { }
 
     public static (VertexPositionNormalColor[] vertices, short[] indices) CreateRectangularPrism(float width = 1.5f, float height = 0.8f, float depth = 0.6f)
     {

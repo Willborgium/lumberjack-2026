@@ -13,6 +13,9 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="MonoGame.Framework.WindowsDX" Version="3.8.*" />
-    <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.*" />
+    <!-- Content builder task disabled to avoid tooling issues in this environment; textures will be
+         loaded at runtime as a fallback. Re-enable by restoring the package reference if you want
+         the MGCB pipeline to run during build. -->
+    <!-- <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.*" /> -->
   </ItemGroup>
 </Project>
