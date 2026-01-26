@@ -227,6 +227,30 @@ public static class TestFunctions
         return (verts, inds, new TextureCoordInfo());
     }
 
+    public static (VertexPositionNormalTextureColor[] vertices, short[] indices) CreateTexturedPlane(float width = 10f, float depth = 10f, float uvScale = 1f)
+    {
+        float hw = width * 0.5f;
+        float hd = depth * 0.5f;
+
+        var normal = Vector3.Up;
+        var color = Color.White;
+
+        var verts = new VertexPositionNormalTextureColor[4];
+        // positions on XZ plane, Y = 0
+        verts[0] = new VertexPositionNormalTextureColor(new Vector3(-hw, 0, -hd), normal, new Vector2(0, uvScale), color);
+        verts[1] = new VertexPositionNormalTextureColor(new Vector3(hw, 0, -hd), normal, new Vector2(uvScale, uvScale), color);
+        verts[2] = new VertexPositionNormalTextureColor(new Vector3(hw, 0, hd), normal, new Vector2(uvScale, 0), color);
+        verts[3] = new VertexPositionNormalTextureColor(new Vector3(-hw, 0, hd), normal, new Vector2(0, 0), color);
+
+        var inds = new short[]
+        {
+            0, 1, 2,
+            0, 2, 3
+        };
+
+        return (verts, inds);
+    }
+
     // placeholder to return extra texture info in future (kept for API compatibility)
     public struct TextureCoordInfo { }
 

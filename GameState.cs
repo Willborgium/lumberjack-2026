@@ -15,7 +15,9 @@ public class GameState : IState
     private GraphicsDevice? _graphicsDevice;
     private ContentManager? _content;
     private bool _exitRequested = false;
-    private Renderable3DBase? _texturedCube;
+    private Renderable3DBase? _cube;
+    private Renderable3DBase? _floor;
+    private Camera? _camera;
 
     public bool IsExitRequested => _exitRequested;
 
@@ -24,9 +26,8 @@ public class GameState : IState
         _content = content;
         _graphicsDevice = graphicsDevice;
 
-        var (cubeVerts, cubeInds, _) = TestFunctions.CreateTexturedCube();
-        var cubeTexture = ResourceLoader.LoadTexture(content, graphicsDevice, "grass");
-        var cube = new Renderable3D<VertexPositionNormalTextureColor>(cubeVerts, cubeInds, cubeTexture);
+        var (cubeVerts, cubeInds) = TestFunctions.CreateCube();
+        var cube = new Renderable3D<VertexPositionNormalColor>(cubeVerts, cubeInds);
 
         var (sphereVerts, sphereInds) = TestFunctions.CreateSphere(stacks: 10, slices: 14, radius: 0.9f);
         var sphere = new Renderable3D<VertexPositionNormalColor>(sphereVerts, sphereInds);
@@ -37,21 +38,31 @@ public class GameState : IState
         var (prismVerts, prismInds) = TestFunctions.CreateRectangularPrism(width: 1.6f, height: 0.8f, depth: 0.6f);
         var prism = new Renderable3D<VertexPositionNormalColor>(prismVerts, prismInds);
 
+        // large floor plane (textured)
+        var (floorVerts, floorInds) = TestFunctions.CreateTexturedPlane(width: 120f, depth: 120f, uvScale: 24f);
+        var floorTexture = ResourceLoader.LoadTexture(content, graphicsDevice, "grass");
+        var floor = new Renderable3D<VertexPositionNormalTextureColor>(floorVerts, floorInds, floorTexture);
+
         cube.Position = new Vector3(-2.2f, 0f, 0f);
         sphere.Position = new Vector3(2.2f, 0f, 0f);
         pyramid.Position = new Vector3(0f, 1.6f, 0f);
         prism.Position = new Vector3(0f, -1.6f, 0f);
+        floor.Position = new Vector3(0f, -2.2f, 0f);
 
-        _texturedCube = cube;
+        _cube = cube;
+        _floor = floor;
+        _renderables.Add(cube);
         _renderables.Add(sphere);
         _renderables.Add(pyramid);
         _renderables.Add(prism);
+        _renderables.Add(floor);
 
         // configure graphics states for 3D
         graphicsDevice.DepthStencilState = DepthStencilState.Default;
         graphicsDevice.RasterizerState = new RasterizerState { CullMode = CullMode.CullCounterClockwiseFace };
 
-        _view = Matrix.CreateLookAt(new Vector3(0, 0, 6f), Vector3.Zero, Vector3.Up);
+        _camera = new Camera(new Vector3(0, 0, 6f), Vector3.Zero);
+        _view = _camera.GetViewMatrix();
         _projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(45f), graphicsDevice.Viewport.AspectRatio, 0.1f, 100f);
 
         _effect = new BasicEffect(graphicsDevice)
@@ -78,11 +89,22 @@ public class GameState : IState
             return;
         }
 
-        // rotate textured cube if present
-        if (_texturedCube != null) _texturedCube.Rotation += new Vector3(0.01f, 0.02f, 0.03f);
+        if (_camera != null)
+        {
+            _camera.Update(gameTime);
+            _view = _camera.GetViewMatrix();
+            if (_effect != null) _effect.View = _view;
+        }
+
+        // rotate cube if present
+        if (_cube != null) _cube.Rotation += new Vector3(0.01f, 0.02f, 0.03f);
 
         foreach (var r in _renderables)
         {
+            if (r == _floor)
+            {
+                continue;
+            }
             r.Rotation += new Vector3(0.01f, 0.02f, 0.03f);
         }
     }
@@ -92,15 +114,6 @@ public class GameState : IState
         graphicsDevice.Clear(Color.CornflowerBlue);
 
         if (_effect == null) return;
-
-        // draw textured cube first (enables texture on effect)
-        if (_texturedCube != null)
-        {
-            _texturedCube.Draw(_effect, graphicsDevice);
-        }
-
-        // disable texture for non-textured renderables
-        _effect.TextureEnabled = false;
 
         if (_renderables != null && _renderables.Count > 0)
         {
