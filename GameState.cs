@@ -25,18 +25,7 @@ public class GameState : IState
         _graphicsDevice = graphicsDevice;
 
         var (cubeVerts, cubeInds, _) = TestFunctions.CreateTexturedCube();
-        Texture2D cubeTexture;
-        try
-        {
-            cubeTexture = content.Load<Texture2D>("grass");
-        }
-        catch
-        {
-            // fallback to loading directly from file if content pipeline isn't available
-            var path = System.IO.Path.Combine(content.RootDirectory, "grass.jpg");
-            using var fs = System.IO.File.OpenRead(path);
-            cubeTexture = Texture2D.FromStream(graphicsDevice, fs);
-        }
+        var cubeTexture = ResourceLoader.LoadTexture(content, graphicsDevice, "grass");
         var cube = new Renderable3D<VertexPositionNormalTextureColor>(cubeVerts, cubeInds, cubeTexture);
 
         var (sphereVerts, sphereInds) = TestFunctions.CreateSphere(stacks: 10, slices: 14, radius: 0.9f);

@@ -8,8 +8,10 @@ namespace Lumberjack;
 public class Driver : Game
 {
     private GraphicsDeviceManager _graphics;
-    private SpriteBatch _spriteBatch;
+    private SpriteBatch? _spriteBatch;
     private StateManager _stateManager;
+
+    public SpriteBatch SpriteBatch => _spriteBatch ?? throw new System.InvalidOperationException("SpriteBatch is not initialized. Call LoadContent() before accessing this property.");
 
     public Driver()
     {
