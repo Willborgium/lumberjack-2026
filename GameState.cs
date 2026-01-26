@@ -126,12 +126,27 @@ public class GameState : IState
     {
         graphicsDevice.Clear(Color.CornflowerBlue);
 
+        // ensure 3D pipeline state is restored before drawing meshes (SpriteBatch changes these)
+        graphicsDevice.DepthStencilState = DepthStencilState.Default;
+        graphicsDevice.RasterizerState = new RasterizerState { CullMode = CullMode.CullCounterClockwiseFace };
+        graphicsDevice.BlendState = BlendState.Opaque;
+        graphicsDevice.SamplerStates[0] = SamplerState.LinearWrap;
+
         if (_effect == null) return;
 
         if (_renderables != null && _renderables.Count > 0)
         {
+            if (_floor != null)
+            {
+                // draw floor with no culling so it is visible from both sides
+                graphicsDevice.RasterizerState = new RasterizerState { CullMode = CullMode.None };
+                _floor.Draw(_effect, graphicsDevice);
+                graphicsDevice.RasterizerState = new RasterizerState { CullMode = CullMode.CullCounterClockwiseFace };
+            }
+
             foreach (var r in _renderables)
             {
+                if (r == _floor) continue;
                 r.Draw(_effect, graphicsDevice);
             }
         }

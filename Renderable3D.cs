@@ -1,4 +1,3 @@
-using System.Drawing;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -75,10 +74,12 @@ public class Renderable3D<T> : Renderable3DBase where T : struct, IVertexType
         {
             effect.TextureEnabled = true;
             effect.Texture = _texture;
+            graphicsDevice.SamplerStates[0] = SamplerState.LinearWrap;
         }
         else
         {
             effect.TextureEnabled = false;
+            graphicsDevice.SamplerStates[0] = SamplerState.LinearClamp;
         }
 
         foreach (var pass in effect.CurrentTechnique.Passes)
