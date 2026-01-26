@@ -4,11 +4,8 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace Lumberjack;
 
-public class Renderable3D
+public abstract class Renderable3DBase
 {
-    private readonly VertexPositionNormalColor[] _vertices;
-    private readonly short[] _indices;
-
     private Vector3 _position = Vector3.Zero;
     private Vector3 _rotation = Vector3.Zero; // pitch(x), yaw(y), roll(z)
     private Vector3 _scale = Vector3.One;
@@ -39,12 +36,6 @@ public class Renderable3D
         get { if (_dirty) RecalculateWorld(); return _worldCache; }
     }
 
-    public Renderable3D(VertexPositionNormalColor[] vertices, short[] indices)
-    {
-        _vertices = vertices;
-        _indices = indices;
-    }
-
     private void RecalculateWorld()
     {
         var rot = Matrix.CreateFromYawPitchRoll(_rotation.Y, _rotation.X, _rotation.Z);
@@ -54,16 +45,46 @@ public class Renderable3D
         _dirty = false;
     }
 
-    // Draw using a shared BasicEffect. The driver should configure effect.View, effect.Projection
-    // and lighting once; here we only set World and issue the draw calls.
-    public void Draw(BasicEffect effect, GraphicsDevice graphicsDevice)
+    public abstract void Draw(BasicEffect effect, GraphicsDevice graphicsDevice);
+}
+
+public class Renderable3D<T> : Renderable3DBase where T : struct, IVertexType
+{
+    private readonly T[] _vertices;
+    private readonly short[] _indices;
+    private readonly Texture2D? _texture;
+
+    public Renderable3D(T[] vertices, short[] indices)
+    {
+        _vertices = vertices;
+        _indices = indices;
+    }
+
+    public Renderable3D(T[] vertices, short[] indices, Texture2D texture)
+    {
+        _vertices = vertices;
+        _indices = indices;
+        _texture = texture;
+    }
+
+    public override void Draw(BasicEffect effect, GraphicsDevice graphicsDevice)
     {
         effect.World = World;
+
+        if (_texture != null)
+        {
+            effect.TextureEnabled = true;
+            effect.Texture = _texture;
+        }
+        else
+        {
+            effect.TextureEnabled = false;
+        }
 
         foreach (var pass in effect.CurrentTechnique.Passes)
         {
             pass.Apply();
-            graphicsDevice.DrawUserIndexedPrimitives<VertexPositionNormalColor>(
+            graphicsDevice.DrawUserIndexedPrimitives<T>(
                 PrimitiveType.TriangleList,
                 _vertices, 0, _vertices.Length,
                 _indices, 0, _indices.Length / 3);

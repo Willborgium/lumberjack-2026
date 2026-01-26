@@ -8,14 +8,14 @@ namespace Lumberjack;
 
 public class GameState : IState
 {
-    private List<Renderable3D> _renderables = new List<Renderable3D>();
+    private List<Renderable3DBase> _renderables = new List<Renderable3DBase>();
     private Matrix _view;
     private Matrix _projection;
     private BasicEffect? _effect;
     private GraphicsDevice? _graphicsDevice;
     private ContentManager? _content;
     private bool _exitRequested = false;
-    private TexturedRenderable3D? _texturedCube;
+    private Renderable3DBase? _texturedCube;
 
     public bool IsExitRequested => _exitRequested;
 
@@ -37,16 +37,16 @@ public class GameState : IState
             using var fs = System.IO.File.OpenRead(path);
             cubeTexture = Texture2D.FromStream(graphicsDevice, fs);
         }
-        var cube = new TexturedRenderable3D(cubeVerts, cubeInds, cubeTexture);
+        var cube = new Renderable3D<VertexPositionNormalTextureColor>(cubeVerts, cubeInds, cubeTexture);
 
         var (sphereVerts, sphereInds) = TestFunctions.CreateSphere(stacks: 10, slices: 14, radius: 0.9f);
-        var sphere = new Renderable3D(sphereVerts, sphereInds);
+        var sphere = new Renderable3D<VertexPositionNormalColor>(sphereVerts, sphereInds);
 
         var (pyramidVerts, pyramidInds) = TestFunctions.CreatePyramid(size: 0.9f, height: 1.4f);
-        var pyramid = new Renderable3D(pyramidVerts, pyramidInds);
+        var pyramid = new Renderable3D<VertexPositionNormalColor>(pyramidVerts, pyramidInds);
 
         var (prismVerts, prismInds) = TestFunctions.CreateRectangularPrism(width: 1.6f, height: 0.8f, depth: 0.6f);
-        var prism = new Renderable3D(prismVerts, prismInds);
+        var prism = new Renderable3D<VertexPositionNormalColor>(prismVerts, prismInds);
 
         cube.Position = new Vector3(-2.2f, 0f, 0f);
         sphere.Position = new Vector3(2.2f, 0f, 0f);
