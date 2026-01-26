@@ -18,6 +18,8 @@ public class GameState : IState
     private Renderable3DBase? _cube;
     private Renderable3DBase? _floor;
     private Camera? _camera;
+    private SpriteBatch? _spriteBatch;
+    private DebugPanel? _debugPanel;
 
     public bool IsExitRequested => _exitRequested;
 
@@ -79,6 +81,10 @@ public class GameState : IState
         _effect.DirectionalLight0.DiffuseColor = new Vector3(1f, 1f, 1f);
         _effect.DirectionalLight0.SpecularColor = new Vector3(0.3f, 0.3f, 0.3f);
         _effect.AmbientLightColor = new Vector3(0.18f, 0.18f, 0.18f);
+
+        _spriteBatch = new SpriteBatch(graphicsDevice);
+        _debugPanel = new DebugPanel();
+        _debugPanel.Load(content, graphicsDevice, _spriteBatch, "DebugFont");
     }
 
     public void Update(GameTime gameTime)
@@ -94,6 +100,13 @@ public class GameState : IState
             _camera.Update(gameTime);
             _view = _camera.GetViewMatrix();
             if (_effect != null) _effect.View = _view;
+        }
+
+        if (_debugPanel != null)
+        {
+            _debugPanel.SetStat("Camera", _camera != null ? $"{_camera.Position.X:F2}, {_camera.Position.Y:F2}, {_camera.Position.Z:F2}" : "N/A");
+            _debugPanel.SetStat("Renderables", _renderables.Count.ToString());
+            _debugPanel.Update(gameTime);
         }
 
         // rotate cube if present
@@ -122,5 +135,7 @@ public class GameState : IState
                 r.Draw(_effect, graphicsDevice);
             }
         }
+
+        _debugPanel?.Draw(graphicsDevice);
     }
 }

@@ -83,7 +83,4 @@ publish/
 *.runtimeconfig.json
 *.deps.json
 
-# Keep the source Content/Content.mgcb but ignore its generated outputs
-Content/Content.mgcb
-
 # End of .gitignore
