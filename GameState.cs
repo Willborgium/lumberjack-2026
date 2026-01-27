@@ -58,6 +58,7 @@ public class GameState : IState
         graphicsDevice.RasterizerState = new RasterizerState { CullMode = CullMode.CullCounterClockwiseFace };
 
         _camera = new Camera(new Vector3(0, 0, 6f), Vector3.Zero);
+        _camera.SetViewport(graphicsDevice.Viewport);
         _updatables.Add(_camera);
         var view = _camera.GetViewMatrix();
         var projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(45f), graphicsDevice.Viewport.AspectRatio, 0.1f, 200f);

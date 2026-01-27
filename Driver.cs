@@ -15,9 +15,14 @@ public class Driver : Game
 
     public Driver()
     {
-        _graphics = new GraphicsDeviceManager(this);
+        _graphics = new GraphicsDeviceManager(this)
+        {
+            PreferredBackBufferWidth = 1920,
+            PreferredBackBufferHeight = 1080,
+            IsFullScreen = true,
+        };
         Content.RootDirectory = "Content";
-        IsMouseVisible = true;
+        IsMouseVisible = false;
         _stateManager = new StateManager();
     }
 
