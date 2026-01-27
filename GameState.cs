@@ -80,6 +80,7 @@ public class GameState : IState
         _debugPanel = new DebugPanel();
         _debugPanel.Load(content, graphicsDevice, _spriteBatch, "DebugFont");
         _debugPanel.ConfigureStatProviders(() => _camera, () => _renderables.Count);
+        _debugPanel.ConfigureOverlay(graphicsDevice, projection, () => _renderables);
         _updatables.Add(_debugPanel);
     }
 
@@ -115,18 +116,15 @@ public class GameState : IState
 
         if (_effect == null) return;
 
-        if (_camera != null)
+        Matrix view = _camera != null ? _camera.GetViewMatrix() : Matrix.Identity;
+        _effect.View = view;
+
+        foreach (var r in _renderables)
         {
-            _effect.View = _camera.GetViewMatrix();
+            r.Draw(_effect, graphicsDevice);
         }
 
-        if (_renderables.Count > 0)
-        {
-            foreach (var r in _renderables)
-            {
-                r.Draw(_effect, graphicsDevice);
-            }
-        }
+        _debugPanel?.DrawOverlay(graphicsDevice, view);
 
         _debugPanel?.Draw(graphicsDevice);
     }

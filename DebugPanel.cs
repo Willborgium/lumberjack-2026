@@ -12,6 +12,10 @@ public class DebugPanel : IUpdatable
     private readonly Dictionary<string, string> _stats = new Dictionary<string, string>();
     private Func<Camera?>? _cameraProvider;
     private Func<int>? _renderableCountProvider;
+    private Func<IEnumerable<Renderable3DBase>>? _renderablesProvider;
+    private BasicEffect? _overlayEffect;
+    private Texture2D? _vertexCircle;
+    private bool _drawWireOverlay = false;
     private SpriteFont? _font;
     private Texture2D? _background;
     private SpriteBatch? _spriteBatch;
@@ -41,6 +45,22 @@ public class DebugPanel : IUpdatable
         _renderableCountProvider = renderableCountProvider;
     }
 
+    public void ConfigureOverlay(GraphicsDevice graphicsDevice, Matrix projection, Func<IEnumerable<Renderable3DBase>> renderablesProvider)
+    {
+        _overlayEffect = new BasicEffect(graphicsDevice)
+        {
+            VertexColorEnabled = true,
+            LightingEnabled = false,
+            TextureEnabled = false,
+            Projection = projection,
+            View = Matrix.Identity,
+            World = Matrix.Identity
+        };
+
+        _vertexCircle = ResourceLoader.CreateCircleTexture(graphicsDevice, 12, Color.White);
+        _renderablesProvider = renderablesProvider;
+    }
+
     public void Update(GameTime gameTime)
     {
         if (_cameraProvider != null)
@@ -65,6 +85,11 @@ public class DebugPanel : IUpdatable
         if (kb.IsKeyDown(Keys.OemTilde) && !_prevKeyboard.IsKeyDown(Keys.OemTilde))
         {
             Visible = !Visible;
+        }
+
+        if (kb.IsKeyDown(Keys.F3) && !_prevKeyboard.IsKeyDown(Keys.F3))
+        {
+            _drawWireOverlay = !_drawWireOverlay;
         }
 
         _prevKeyboard = kb;
@@ -109,5 +134,55 @@ public class DebugPanel : IUpdatable
         }
 
         _spriteBatch.End();
+    }
+
+    public void DrawOverlay(GraphicsDevice graphicsDevice, Matrix view)
+    {
+        if (!_drawWireOverlay || _overlayEffect == null || _vertexCircle == null || _spriteBatch == null || _renderablesProvider == null)
+        {
+            return;
+        }
+
+        var renderables = _renderablesProvider();
+
+        _overlayEffect.View = view;
+
+        graphicsDevice.BlendState = BlendState.Opaque;
+        graphicsDevice.DepthStencilState = DepthStencilState.Default;
+        graphicsDevice.SamplerStates[0] = SamplerState.LinearClamp;
+        graphicsDevice.RasterizerState = RasterizerState.CullNone;
+
+        foreach (var r in renderables)
+        {
+            var positions = r.GetPositions();
+            var edges = r.GetEdges();
+            if (positions.Count == 0 || edges.Count == 0) continue;
+
+            _overlayEffect.World = r.World;
+
+            var lineVerts = new VertexPositionColor[edges.Count * 2];
+            int idx = 0;
+            foreach (var (a, b) in edges)
+            {
+                lineVerts[idx++] = new VertexPositionColor(positions[a], Color.Black);
+                lineVerts[idx++] = new VertexPositionColor(positions[b], Color.Black);
+            }
+
+            foreach (var pass in _overlayEffect.CurrentTechnique.Passes)
+            {
+                pass.Apply();
+                graphicsDevice.DrawUserPrimitives(PrimitiveType.LineList, lineVerts, 0, edges.Count);
+            }
+
+            _spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, DepthStencilState.None, RasterizerState.CullNone);
+            foreach (var pos in positions)
+            {
+                var worldPos = Vector3.Transform(pos, r.World);
+                var projected = graphicsDevice.Viewport.Project(worldPos, _overlayEffect.Projection, _overlayEffect.View, Matrix.Identity);
+                if (projected.Z < 0 || projected.Z > 1) continue;
+                _spriteBatch.Draw(_vertexCircle, new Vector2(projected.X - _vertexCircle.Width * 0.5f, projected.Y - _vertexCircle.Height * 0.5f), Color.White);
+            }
+            _spriteBatch.End();
+        }
     }
 }
