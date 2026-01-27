@@ -9,14 +9,9 @@ namespace Lumberjack;
 public class GameState : IState
 {
     private List<Renderable3DBase> _renderables = new List<Renderable3DBase>();
-    private Matrix _view;
-    private Matrix _projection;
+    private readonly List<IUpdatable> _updatables = new List<IUpdatable>();
     private BasicEffect? _effect;
-    private GraphicsDevice? _graphicsDevice;
-    private ContentManager? _content;
     private bool _exitRequested = false;
-    private Renderable3DBase? _cube;
-    private Renderable3DBase? _floor;
     private Camera? _camera;
     private SpriteBatch? _spriteBatch;
     private DebugPanel? _debugPanel;
@@ -25,9 +20,6 @@ public class GameState : IState
 
     public void Load(ContentManager content, GraphicsDevice graphicsDevice)
     {
-        _content = content;
-        _graphicsDevice = graphicsDevice;
-
         var (cubeVerts, cubeInds) = TestFunctions.CreateCube();
         var cube = new Renderable3D<VertexPositionNormalColor>(cubeVerts, cubeInds);
 
@@ -51,29 +43,31 @@ public class GameState : IState
         prism.Position = new Vector3(0f, -1.6f, 0f);
         floor.Position = new Vector3(0f, -2.2f, 0f);
 
-        _cube = cube;
-        _floor = floor;
         _renderables.Add(cube);
         _renderables.Add(sphere);
         _renderables.Add(pyramid);
         _renderables.Add(prism);
         _renderables.Add(floor);
 
+        floor.CullMode = CullMode.None;
+        floor.EnableAutoRotation = false;
+
         // configure graphics states for 3D
         graphicsDevice.DepthStencilState = DepthStencilState.Default;
         graphicsDevice.RasterizerState = new RasterizerState { CullMode = CullMode.CullCounterClockwiseFace };
 
         _camera = new Camera(new Vector3(0, 0, 6f), Vector3.Zero);
-        _view = _camera.GetViewMatrix();
-        _projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(45f), graphicsDevice.Viewport.AspectRatio, 0.1f, 100f);
+        _updatables.Add(_camera);
+        var view = _camera.GetViewMatrix();
+        var projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(45f), graphicsDevice.Viewport.AspectRatio, 0.1f, 100f);
 
         _effect = new BasicEffect(graphicsDevice)
         {
             VertexColorEnabled = true,
             LightingEnabled = true,
             SpecularPower = 16f,
-            View = _view,
-            Projection = _projection
+            View = view,
+            Projection = projection
         };
         _effect.EnableDefaultLighting();
         _effect.DirectionalLight0.Enabled = true;
@@ -85,6 +79,8 @@ public class GameState : IState
         _spriteBatch = new SpriteBatch(graphicsDevice);
         _debugPanel = new DebugPanel();
         _debugPanel.Load(content, graphicsDevice, _spriteBatch, "DebugFont");
+        _debugPanel.ConfigureStatProviders(() => _camera, () => _renderables.Count);
+        _updatables.Add(_debugPanel);
     }
 
     public void Update(GameTime gameTime)
@@ -95,29 +91,14 @@ public class GameState : IState
             return;
         }
 
-        if (_camera != null)
+        foreach (var updatable in _updatables)
         {
-            _camera.Update(gameTime);
-            _view = _camera.GetViewMatrix();
-            if (_effect != null) _effect.View = _view;
+            updatable.Update(gameTime);
         }
-
-        if (_debugPanel != null)
-        {
-            _debugPanel.SetStat("Camera", _camera != null ? $"{_camera.Position.X:F2}, {_camera.Position.Y:F2}, {_camera.Position.Z:F2}" : "N/A");
-            _debugPanel.SetStat("Renderables", _renderables.Count.ToString());
-            _debugPanel.Update(gameTime);
-        }
-
-        // rotate cube if present
-        if (_cube != null) _cube.Rotation += new Vector3(0.01f, 0.02f, 0.03f);
 
         foreach (var r in _renderables)
         {
-            if (r == _floor)
-            {
-                continue;
-            }
+            if (!r.EnableAutoRotation) continue;
             r.Rotation += new Vector3(0.01f, 0.02f, 0.03f);
         }
     }
@@ -134,19 +115,15 @@ public class GameState : IState
 
         if (_effect == null) return;
 
-        if (_renderables != null && _renderables.Count > 0)
+        if (_camera != null)
         {
-            if (_floor != null)
-            {
-                // draw floor with no culling so it is visible from both sides
-                graphicsDevice.RasterizerState = new RasterizerState { CullMode = CullMode.None };
-                _floor.Draw(_effect, graphicsDevice);
-                graphicsDevice.RasterizerState = new RasterizerState { CullMode = CullMode.CullCounterClockwiseFace };
-            }
+            _effect.View = _camera.GetViewMatrix();
+        }
 
+        if (_renderables.Count > 0)
+        {
             foreach (var r in _renderables)
             {
-                if (r == _floor) continue;
                 r.Draw(_effect, graphicsDevice);
             }
         }

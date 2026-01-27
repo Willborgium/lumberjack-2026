@@ -3,7 +3,7 @@ using Microsoft.Xna.Framework.Input;
 
 namespace Lumberjack;
 
-public class Camera
+public class Camera : IUpdatable
 {
     public Vector3 Position { get; private set; }
     public Vector3 Target { get; }

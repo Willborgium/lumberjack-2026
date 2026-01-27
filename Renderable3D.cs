@@ -12,6 +12,9 @@ public abstract class Renderable3DBase
     private Matrix _worldCache = Matrix.Identity;
     private bool _dirty = true;
 
+    public bool EnableAutoRotation { get; set; } = true;
+    public CullMode CullMode { get; set; } = CullMode.CullCounterClockwiseFace;
+
     public Vector3 Position
     {
         get => _position;
@@ -69,6 +72,13 @@ public class Renderable3D<T> : Renderable3DBase where T : struct, IVertexType
     public override void Draw(BasicEffect effect, GraphicsDevice graphicsDevice)
     {
         effect.World = World;
+
+        graphicsDevice.RasterizerState = CullMode switch
+        {
+            CullMode.CullClockwiseFace => RasterizerState.CullClockwise,
+            CullMode.CullCounterClockwiseFace => RasterizerState.CullCounterClockwise,
+            _ => RasterizerState.CullNone
+        };
 
         if (_texture != null)
         {

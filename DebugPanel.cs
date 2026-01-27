@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
@@ -6,9 +7,11 @@ using Microsoft.Xna.Framework.Input;
 
 namespace Lumberjack;
 
-public class DebugPanel
+public class DebugPanel : IUpdatable
 {
     private readonly Dictionary<string, string> _stats = new Dictionary<string, string>();
+    private Func<Camera?>? _cameraProvider;
+    private Func<int>? _renderableCountProvider;
     private SpriteFont? _font;
     private Texture2D? _background;
     private SpriteBatch? _spriteBatch;
@@ -32,8 +35,32 @@ public class DebugPanel
         _stats[key] = value;
     }
 
+    public void ConfigureStatProviders(Func<Camera?> cameraProvider, Func<int> renderableCountProvider)
+    {
+        _cameraProvider = cameraProvider;
+        _renderableCountProvider = renderableCountProvider;
+    }
+
     public void Update(GameTime gameTime)
     {
+        if (_cameraProvider != null)
+        {
+            var camera = _cameraProvider();
+            if (camera != null)
+            {
+                _stats["Camera"] = $"{camera.Position.X:F2}, {camera.Position.Y:F2}, {camera.Position.Z:F2}";
+            }
+            else
+            {
+                _stats["Camera"] = "N/A";
+            }
+        }
+
+        if (_renderableCountProvider != null)
+        {
+            _stats["Renderables"] = _renderableCountProvider().ToString();
+        }
+
         var kb = Keyboard.GetState();
         if (kb.IsKeyDown(Keys.OemTilde) && !_prevKeyboard.IsKeyDown(Keys.OemTilde))
         {
