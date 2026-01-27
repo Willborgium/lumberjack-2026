@@ -13,6 +13,7 @@ public class GameState : IState
     private BasicEffect? _effect;
     private bool _exitRequested = false;
     private Camera? _camera;
+    private Skybox? _skybox;
     private SpriteBatch? _spriteBatch;
     private DebugPanel? _debugPanel;
 
@@ -59,7 +60,10 @@ public class GameState : IState
         _camera = new Camera(new Vector3(0, 0, 6f), Vector3.Zero);
         _updatables.Add(_camera);
         var view = _camera.GetViewMatrix();
-        var projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(45f), graphicsDevice.Viewport.AspectRatio, 0.1f, 100f);
+        var projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(45f), graphicsDevice.Viewport.AspectRatio, 0.1f, 200f);
+
+        var skyTexture = ResourceLoader.LoadTexture(content, graphicsDevice, "sky");
+        _skybox = new Skybox(graphicsDevice, skyTexture, size: 80f);
 
         _effect = new BasicEffect(graphicsDevice)
         {
@@ -118,6 +122,11 @@ public class GameState : IState
 
         Matrix view = _camera != null ? _camera.GetViewMatrix() : Matrix.Identity;
         _effect.View = view;
+
+        if (_skybox != null && _camera != null)
+        {
+            _skybox.Draw(graphicsDevice, view, _effect.Projection, _camera.Position);
+        }
 
         foreach (var r in _renderables)
         {

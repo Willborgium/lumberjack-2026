@@ -6,7 +6,7 @@ namespace Lumberjack;
 public class Camera : IUpdatable
 {
     public Vector3 Position { get; private set; }
-    public Vector3 Target { get; }
+    public Vector3 Target { get; private set; }
     public float MoveSpeed { get; set; } = 4f;
 
     public Camera(Vector3 position, Vector3 target)
@@ -31,7 +31,14 @@ public class Camera : IUpdatable
         {
             move.Normalize();
             float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
-            Position += move * MoveSpeed * dt;
+            if (kb.IsKeyDown(Keys.LeftShift) || kb.IsKeyDown(Keys.RightShift))
+            {
+                Target += move * MoveSpeed * dt;
+            }
+            else
+            {
+                Position += move * MoveSpeed * dt;
+            }
         }
     }
 
