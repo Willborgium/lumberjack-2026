@@ -20,6 +20,25 @@ public class StateManager
 
     public void SetState(IState state, ContentManager content, GraphicsDevice graphicsDevice)
     {
+        _resources.Get<BasicEffect>("default-basic-effect", (c, g) =>
+        {
+            var fx = new BasicEffect(graphicsDevice)
+            {
+                VertexColorEnabled = true,
+                LightingEnabled = true,
+                SpecularPower = 16f,
+                View = Matrix.Identity,
+                Projection = Matrix.Identity
+            };
+            fx.EnableDefaultLighting();
+            fx.DirectionalLight0.Enabled = true;
+            fx.DirectionalLight0.Direction = Vector3.Normalize(new Vector3(-0.5f, -1f, -0.3f));
+            fx.DirectionalLight0.DiffuseColor = new Vector3(1f, 1f, 1f);
+            fx.DirectionalLight0.SpecularColor = new Vector3(0.3f, 0.3f, 0.3f);
+            fx.AmbientLightColor = new Vector3(0.18f, 0.18f, 0.18f);
+            return fx;
+        });
+
         _current = state;
         _current.Load(content, graphicsDevice, _resources, _input);
     }

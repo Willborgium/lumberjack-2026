@@ -17,6 +17,7 @@ public abstract class Renderable3DBase
 
     public bool EnableAutoRotation { get; set; } = true;
     public CullMode CullMode { get; set; } = CullMode.CullClockwiseFace;
+    public BasicEffect? Effect { get; set; }
 
     public Vector3 Position
     {

@@ -14,6 +14,7 @@ public abstract class BaseState : IState
     protected InputService Input = null!;
     protected ResourceManager Resources = null!;
     protected DebugPanel? DebugPanel;
+    protected BasicEffect DefaultEffect => Resources.Get<BasicEffect>("default-basic-effect");
 
     private bool _exitRequested;
     private Matrix _cachedProjection;
@@ -82,16 +83,34 @@ public abstract class BaseState : IState
         var view = GetView(graphicsDevice);
         var projection = GetProjection(graphicsDevice);
 
-        var effect = Resources.Get<BasicEffect>("basic-effect");
-        effect.View = view;
-        effect.Projection = projection;
         DebugPanel?.UpdateOverlayProjection(projection);
 
         DrawSkybox(graphicsDevice, view, projection);
 
+        var defaultEffect = DefaultEffect;
+        var groups = new Dictionary<BasicEffect, List<Renderable3DBase>>();
+
         foreach (var r in Renderables)
         {
-            r.Draw(effect, graphicsDevice);
+            var fx = r.Effect ?? defaultEffect;
+            if (!groups.TryGetValue(fx, out var list))
+            {
+                list = new List<Renderable3DBase>();
+                groups[fx] = list;
+            }
+            list.Add(r);
+        }
+
+        foreach (var kvp in groups)
+        {
+            var fx = kvp.Key;
+            fx.View = view;
+            fx.Projection = projection;
+
+            foreach (var r in kvp.Value)
+            {
+                r.Draw(fx, graphicsDevice);
+            }
         }
 
         DebugPanel?.DrawOverlay(graphicsDevice, view);
@@ -131,19 +150,7 @@ public abstract class BaseState : IState
 
     protected virtual void ConfigureEffectDefaults(GraphicsDevice graphicsDevice)
     {
-        Resources.Get<BasicEffect>("basic-effect", (c, g) =>
-        {
-            var fx = new BasicEffect(g)
-            {
-                VertexColorEnabled = true,
-                LightingEnabled = true,
-                SpecularPower = 16f,
-                View = Matrix.Identity,
-                Projection = Matrix.Identity
-            };
-            fx.EnableDefaultLighting();
-            return fx;
-        });
+        // Default effect is expected to be created by the state manager and stored in resources.
     }
 
     protected virtual void ConfigureDebugPanel(ContentManager content, GraphicsDevice graphicsDevice)
