@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -88,28 +89,15 @@ public abstract class BaseState : IState
         DrawSkybox(graphicsDevice, view, projection);
 
         var defaultEffect = DefaultEffect;
-        var groups = new Dictionary<BasicEffect, List<Renderable3DBase>>();
-
-        foreach (var r in Renderables)
+        foreach (var group in Renderables.GroupBy(r => r.Effect ?? defaultEffect))
         {
-            var fx = r.Effect ?? defaultEffect;
-            if (!groups.TryGetValue(fx, out var list))
-            {
-                list = new List<Renderable3DBase>();
-                groups[fx] = list;
-            }
-            list.Add(r);
-        }
-
-        foreach (var kvp in groups)
-        {
-            var fx = kvp.Key;
+            var fx = group.Key;
             fx.View = view;
             fx.Projection = projection;
 
-            foreach (var r in kvp.Value)
+            foreach (var renderable in group)
             {
-                r.Draw(fx, graphicsDevice);
+                renderable.Draw(fx, graphicsDevice);
             }
         }
 
