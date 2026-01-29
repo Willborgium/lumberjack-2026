@@ -7,13 +7,19 @@ namespace Lumberjack;
 public class StateManager
 {
     private IState? _current;
+    private readonly ResourceManager _resources;
+
+    public StateManager(ResourceManager resources)
+    {
+        _resources = resources;
+    }
 
     public bool IsExitRequested => _current?.IsExitRequested ?? false;
 
     public void SetState(IState state, ContentManager content, GraphicsDevice graphicsDevice)
     {
         _current = state;
-        _current.Load(content, graphicsDevice);
+        _current.Load(content, graphicsDevice, _resources);
     }
 
     public void Update(GameTime gameTime) => _current?.Update(gameTime);

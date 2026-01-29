@@ -10,18 +10,19 @@ public class GameState : IState
 {
     private List<Renderable3DBase> _renderables = new List<Renderable3DBase>();
     private readonly List<IUpdatable> _updatables = new List<IUpdatable>();
-    private BasicEffect? _effect;
     private bool _exitRequested = false;
     private Camera? _camera;
     private Skybox? _skybox;
-    private SpriteBatch? _spriteBatch;
     private DebugPanel? _debugPanel;
     private InputService _input = new InputService();
+    private ResourceManager? _resources;
 
     public bool IsExitRequested => _exitRequested;
 
-    public void Load(ContentManager content, GraphicsDevice graphicsDevice)
+    public void Load(ContentManager content, GraphicsDevice graphicsDevice, ResourceManager resources)
     {
+        _resources = resources;
+
         var (cubeVerts, cubeInds) = TestFunctions.CreateCube();
         var cube = new Renderable3D<VertexPositionNormalColor>(cubeVerts, cubeInds);
 
@@ -36,7 +37,7 @@ public class GameState : IState
 
         // large floor plane (textured)
         var (floorVerts, floorInds) = TestFunctions.CreateTexturedPlane(width: 120f, depth: 120f, uvScale: 24f);
-        var floorTexture = ResourceLoader.LoadTexture(content, graphicsDevice, "grass");
+        var floorTexture = _resources.Get<Texture2D>("grass", (c, g) => ResourceLoader.LoadTexture(c, g, "grass"));
         var floor = new Renderable3D<VertexPositionNormalTextureColor>(floorVerts, floorInds, floorTexture);
 
         cube.Position = new Vector3(-2.2f, 0f, 0f);
@@ -64,27 +65,31 @@ public class GameState : IState
         var view = _camera.GetViewMatrix();
         var projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(45f), graphicsDevice.Viewport.AspectRatio, 0.1f, 200f);
 
-        var skyTexture = ResourceLoader.LoadTexture(content, graphicsDevice, "sky");
+        var skyTexture = _resources.Get<Texture2D>("sky", (c, g) => ResourceLoader.LoadTexture(c, g, "sky"));
         _skybox = new Skybox(graphicsDevice, skyTexture, size: 80f);
 
-        _effect = new BasicEffect(graphicsDevice)
+        _resources.Get<BasicEffect>("basic-effect", (c, g) =>
         {
-            VertexColorEnabled = true,
-            LightingEnabled = true,
-            SpecularPower = 16f,
-            View = view,
-            Projection = projection
-        };
-        _effect.EnableDefaultLighting();
-        _effect.DirectionalLight0.Enabled = true;
-        _effect.DirectionalLight0.Direction = Vector3.Normalize(new Vector3(-0.5f, -1f, -0.3f));
-        _effect.DirectionalLight0.DiffuseColor = new Vector3(1f, 1f, 1f);
-        _effect.DirectionalLight0.SpecularColor = new Vector3(0.3f, 0.3f, 0.3f);
-        _effect.AmbientLightColor = new Vector3(0.18f, 0.18f, 0.18f);
+            var fx = new BasicEffect(g)
+            {
+                VertexColorEnabled = true,
+                LightingEnabled = true,
+                SpecularPower = 16f,
+                View = view,
+                Projection = projection
+            };
+            fx.EnableDefaultLighting();
+            fx.DirectionalLight0.Enabled = true;
+            fx.DirectionalLight0.Direction = Vector3.Normalize(new Vector3(-0.5f, -1f, -0.3f));
+            fx.DirectionalLight0.DiffuseColor = new Vector3(1f, 1f, 1f);
+            fx.DirectionalLight0.SpecularColor = new Vector3(0.3f, 0.3f, 0.3f);
+            fx.AmbientLightColor = new Vector3(0.18f, 0.18f, 0.18f);
+            return fx;
+        });
 
-        _spriteBatch = new SpriteBatch(graphicsDevice);
+        var spriteBatch = new SpriteBatch(graphicsDevice);
         _debugPanel = new DebugPanel();
-        _debugPanel.Load(content, graphicsDevice, _spriteBatch, "DebugFont");
+        _debugPanel.Load(content, graphicsDevice, spriteBatch, "DebugFont");
         _debugPanel.ConfigureStatProviders(() => _camera, () => _renderables.Count);
         _debugPanel.ConfigureOverlay(graphicsDevice, projection, () => _renderables);
         _updatables.Add(_debugPanel);
@@ -94,7 +99,7 @@ public class GameState : IState
     {
         _input.Update(gameTime);
 
-        if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || _input.IsKeyDown(Keys.Escape))
+        if (_input.IsKeyDown(Keys.Escape))
         {
             _exitRequested = true;
             return;
@@ -122,19 +127,22 @@ public class GameState : IState
         graphicsDevice.BlendState = BlendState.Opaque;
         graphicsDevice.SamplerStates[0] = SamplerState.LinearWrap;
 
-        if (_effect == null) return;
-
         Matrix view = _camera != null ? _camera.GetViewMatrix() : Matrix.Identity;
-        _effect.View = view;
+        if (_resources == null) return;
+        var effect = _resources.Get<BasicEffect>("basic-effect");
+        effect.View = view;
+        var projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(45f), graphicsDevice.Viewport.AspectRatio, 0.1f, 200f);
+        effect.Projection = projection;
+        _debugPanel?.UpdateOverlayProjection(projection);
 
         if (_skybox != null && _camera != null)
         {
-            _skybox.Draw(graphicsDevice, view, _effect.Projection, _camera.Position);
+            _skybox.Draw(graphicsDevice, view, effect.Projection, _camera.Position);
         }
 
         foreach (var r in _renderables)
         {
-            r.Draw(_effect, graphicsDevice);
+            r.Draw(effect, graphicsDevice);
         }
 
         _debugPanel?.DrawOverlay(graphicsDevice, view);

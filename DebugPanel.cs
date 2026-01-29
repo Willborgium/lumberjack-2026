@@ -61,6 +61,14 @@ public class DebugPanel : IUpdatable
         _renderablesProvider = renderablesProvider;
     }
 
+    public void UpdateOverlayProjection(Matrix projection)
+    {
+        if (_overlayEffect != null)
+        {
+            _overlayEffect.Projection = projection;
+        }
+    }
+
     public void Update(GameTime gameTime)
     {
         if (_cameraProvider != null)
