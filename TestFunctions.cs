@@ -242,10 +242,11 @@ public static class TestFunctions
         verts[2] = new VertexPositionNormalTextureColor(new Vector3(hw, 0, hd), normal, new Vector2(uvScale, 0), color);
         verts[3] = new VertexPositionNormalTextureColor(new Vector3(-hw, 0, hd), normal, new Vector2(0, 0), color);
 
+        // CCW winding when viewed from above (+Y), normal points upward
         var inds = new short[]
         {
-            0, 1, 2,
-            0, 2, 3
+            0, 2, 1,
+            0, 3, 2
         };
 
         return (verts, inds);
@@ -272,14 +273,21 @@ public static class TestFunctions
 
         var colors = new Color[8]{ Color.CornflowerBlue, Color.CadetBlue, Color.LightGreen, Color.Gold, Color.OrangeRed, Color.MediumPurple, Color.White, Color.PaleVioletRed };
 
+        // CCW winding outward for all faces
         var idx = new short[]
         {
-            0,1,2, 0,2,3,
-            4,6,5, 4,7,6,
-            4,3,7, 4,0,3,
-            1,5,6, 1,6,2,
-            3,2,6, 3,6,7,
-            4,5,1, 4,1,0
+            // back (-Z)
+            1,0,3, 1,3,2,
+            // front (+Z)
+            4,5,6, 4,6,7,
+            // left (-X)
+            0,4,7, 0,7,3,
+            // right (+X)
+            5,1,2, 5,2,6,
+            // top (+Y)
+            3,7,6, 3,6,2,
+            // bottom (-Y)
+            0,1,5, 0,5,4
         };
 
         var normals = ComputeNormals(positions, idx);

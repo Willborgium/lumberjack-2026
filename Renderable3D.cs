@@ -16,7 +16,7 @@ public abstract class Renderable3DBase
     private bool _dirty = true;
 
     public bool EnableAutoRotation { get; set; } = true;
-    public CullMode CullMode { get; set; } = CullMode.CullCounterClockwiseFace;
+    public CullMode CullMode { get; set; } = CullMode.CullClockwiseFace;
 
     public Vector3 Position
     {
