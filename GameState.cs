@@ -16,6 +16,7 @@ public class GameState : IState
     private Skybox? _skybox;
     private SpriteBatch? _spriteBatch;
     private DebugPanel? _debugPanel;
+    private InputService _input = new InputService();
 
     public bool IsExitRequested => _exitRequested;
 
@@ -57,7 +58,7 @@ public class GameState : IState
         graphicsDevice.DepthStencilState = DepthStencilState.Default;
         graphicsDevice.RasterizerState = new RasterizerState { CullMode = CullMode.CullCounterClockwiseFace };
 
-        _camera = new Camera(new Vector3(0, 0, 6f), Vector3.Zero);
+        _camera = new Camera(new Vector3(0, 0, 6f), Vector3.Zero, _input);
         _camera.SetViewport(graphicsDevice.Viewport);
         _updatables.Add(_camera);
         var view = _camera.GetViewMatrix();
@@ -91,7 +92,9 @@ public class GameState : IState
 
     public void Update(GameTime gameTime)
     {
-        if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
+        _input.Update(gameTime);
+
+        if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || _input.IsKeyDown(Keys.Escape))
         {
             _exitRequested = true;
             return;

@@ -13,14 +13,15 @@ public class Camera : IUpdatable
     public float RunMultiplier { get; set; } = 2.5f;
     public float MouseSensitivity { get; set; } = .005f;
 
+    private readonly InputService _input;
     private float _yaw;
     private float _pitch;
     private Viewport _viewport;
-    private MouseState _prevMouse;
-    private bool _hasPrevMouse;
 
-    public Camera(Vector3 position, Vector3 target)
+    public Camera(Vector3 position, Vector3 target, InputService input)
     {
+        _input = input;
+
         Position = position;
         Target = target;
 
@@ -38,17 +39,11 @@ public class Camera : IUpdatable
 
     public void Update(GameTime gameTime)
     {
-        var kb = Keyboard.GetState();
-        var mouse = Mouse.GetState();
+        var kb = _input.CurrentKeyboard;
+        var mouseDelta = _input.MouseDelta;
 
-        if (!_hasPrevMouse)
-        {
-            _prevMouse = mouse;
-            _hasPrevMouse = true;
-        }
-
-        var deltaX = mouse.X - _prevMouse.X;
-        var deltaY = mouse.Y - _prevMouse.Y;
+        var deltaX = mouseDelta.X;
+        var deltaY = mouseDelta.Y;
 
         _yaw   -= deltaX * MouseSensitivity;
         _pitch -= deltaY * MouseSensitivity;
@@ -75,9 +70,8 @@ public class Camera : IUpdatable
         Vector3 forward = new Vector3(MathF.Sin(_yaw) * MathF.Cos(_pitch), MathF.Sin(_pitch), MathF.Cos(_yaw) * MathF.Cos(_pitch));
         Target = Position + forward;
 
-        _prevMouse = mouse;
-
         // recenter when close to window edges to allow indefinite turning
+        var mouse = _input.CurrentMouse;
         if (_viewport.Width > 0 && _viewport.Height > 0)
         {
             const int edgeThreshold = 8;
@@ -86,8 +80,7 @@ public class Camera : IUpdatable
             {
                 int centerX = _viewport.Width / 2;
                 int centerY = _viewport.Height / 2;
-                Mouse.SetPosition(centerX, centerY);
-                _prevMouse = Mouse.GetState();
+                _input.WarpMouse(new Point(centerX, centerY));
             }
         }
     }
