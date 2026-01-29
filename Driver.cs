@@ -11,6 +11,7 @@ public class Driver : Game
     private SpriteBatch? _spriteBatch;
     private StateManager? _stateManager;
     private ResourceManager? _resources;
+    private InputService? _input;
 
     public SpriteBatch SpriteBatch => _spriteBatch ?? throw new System.InvalidOperationException("SpriteBatch is not initialized. Call LoadContent() before accessing this property.");
 
@@ -32,7 +33,8 @@ public class Driver : Game
         GraphicsDevice.RasterizerState = new RasterizerState { CullMode = CullMode.CullCounterClockwiseFace };
 
         _resources = new ResourceManager(Content, GraphicsDevice);
-        _stateManager = new StateManager(_resources);
+        _input = new InputService();
+        _stateManager = new StateManager(_resources, _input);
 
         base.Initialize();
     }
