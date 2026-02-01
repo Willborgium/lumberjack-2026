@@ -1,61 +1,51 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
-using System.Collections.Generic;
 
 namespace Lumberjack;
 
 public class Driver : Game
 {
-    private GraphicsDeviceManager _graphics;
-    private SpriteBatch? _spriteBatch;
-    private StateManager? _stateManager;
-    private ResourceManager? _resources;
-    private InputService? _input;
-
-    public SpriteBatch SpriteBatch => _spriteBatch ?? throw new System.InvalidOperationException("SpriteBatch is not initialized. Call LoadContent() before accessing this property.");
+    private readonly InputService _input;
+    private readonly ResourceManager _resources;
+    private readonly StateManager _stateManager;
 
     public Driver()
     {
-        _graphics = new GraphicsDeviceManager(this)
-        {
-            PreferredBackBufferWidth = 1920,
-            PreferredBackBufferHeight = 1080,
-            IsFullScreen = true,
-        };
+        var _ = new GraphicsDeviceManager(this);
+
         Content.RootDirectory = "Content";
         IsMouseVisible = false;
+
+        _input = new InputService();
+        _resources = new ResourceManager();
+        _stateManager = new StateManager(_resources, _input);
     }
 
     protected override void Initialize()
     {
         GraphicsDevice.DepthStencilState = DepthStencilState.Default;
         GraphicsDevice.RasterizerState = new RasterizerState { CullMode = CullMode.CullCounterClockwiseFace };
-
-        _resources = new ResourceManager(Content, GraphicsDevice);
-        _input = new InputService();
-        _stateManager = new StateManager(_resources, _input);
+        GraphicsDevice.PresentationParameters.BackBufferWidth = 1920;
+        GraphicsDevice.PresentationParameters.BackBufferHeight = 1080;
+        GraphicsDevice.PresentationParameters.IsFullScreen = true;
 
         base.Initialize();
     }
 
     protected override void LoadContent()
     {
-        _spriteBatch = new SpriteBatch(GraphicsDevice);
-
-        // initialize the game state and load its content
         var gameState = new GameState();
-        _stateManager?.SetState(gameState, Content, GraphicsDevice);
+        _stateManager.SetState(gameState, Content, GraphicsDevice);
     }
 
     protected override void Update(GameTime gameTime)
     {
-        // allow the state to handle input/logic
-        _stateManager?.Update(gameTime);
+        _stateManager.Update(gameTime);
 
-        // if the state requested exit, close the game
-        if (_stateManager?.IsExitRequested == true)
+        if (_stateManager.IsExitRequested == true)
+        {
             Exit();
+        }
 
         base.Update(gameTime);
     }
@@ -71,7 +61,7 @@ public class Driver : Game
     {
         if (disposing)
         {
-            _resources?.Dispose();
+            _resources.Dispose();
         }
 
         base.Dispose(disposing);

@@ -1,53 +1,26 @@
 using System;
 using System.Collections.Generic;
-using Microsoft.Xna.Framework.Content;
-using Microsoft.Xna.Framework.Graphics;
 
 namespace Lumberjack;
 
 public class ResourceManager : IDisposable
 {
-    private readonly ContentManager _content;
-    private readonly GraphicsDevice _graphicsDevice;
-    private readonly Dictionary<(Type type, string key), object> _cache = new();
+    private readonly Dictionary<string, object?> _cache = [];
 
-    public ResourceManager(ContentManager content, GraphicsDevice graphicsDevice)
+    public T? Get<T>(string key, Func<T>? factory = null) where T : class
     {
-        _content = content ?? throw new ArgumentNullException(nameof(content));
-        _graphicsDevice = graphicsDevice ?? throw new ArgumentNullException(nameof(graphicsDevice));
-    }
+        ArgumentNullException.ThrowIfNull(key);
 
-    public T Get<T>(string key, Func<ContentManager, GraphicsDevice, T>? factory = null) where T : class
-    {
-        if (key == null) throw new ArgumentNullException(nameof(key));
-
-        var cacheKey = (typeof(T), key);
-        if (_cache.TryGetValue(cacheKey, out var existing))
+        if (_cache.TryGetValue(key, out var existing))
         {
-            return (T)existing;
+            return (T?)existing;
         }
 
-        T created = factory != null
-            ? factory(_content, _graphicsDevice)
-            : _content.Load<T>(key);
+        var value = factory?.Invoke();
 
-        _cache[cacheKey] = created;
-        return created;
-    }
+        _cache[key] = value;
 
-    public bool TryGet<T>(string key, out T value) where T : class
-    {
-        if (key == null) throw new ArgumentNullException(nameof(key));
-
-        var cacheKey = (typeof(T), key);
-        if (_cache.TryGetValue(cacheKey, out var existing))
-        {
-            value = (T)existing;
-            return true;
-        }
-
-        value = null!;
-        return false;
+        return value;
     }
 
     public void Dispose()

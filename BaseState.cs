@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Xna.Framework;
@@ -15,7 +16,7 @@ public abstract class BaseState : IState
     protected InputService Input = null!;
     protected ResourceManager Resources = null!;
     protected DebugPanel? DebugPanel;
-    protected BasicEffect DefaultEffect => Resources.Get<BasicEffect>("default-basic-effect");
+    protected BasicEffect DefaultEffect => Resources.Get<BasicEffect>("default-basic-effect") ?? throw new InvalidOperationException("Default effect not found in resources.");
 
     private bool _exitRequested;
     private Matrix _cachedProjection;
@@ -152,4 +153,4 @@ public abstract class BaseState : IState
     }
 
     protected virtual Camera? GetActiveCamera() => null;
-} 
+}

@@ -20,7 +20,7 @@ public class StateManager
 
     public void SetState(IState state, ContentManager content, GraphicsDevice graphicsDevice)
     {
-        _resources.Get<BasicEffect>("default-basic-effect", (c, g) =>
+        _resources.Get("default-basic-effect", () =>
         {
             var fx = new BasicEffect(graphicsDevice)
             {

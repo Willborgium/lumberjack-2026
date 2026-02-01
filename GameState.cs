@@ -27,7 +27,8 @@ public class GameState : BaseState
 
         // large floor plane (textured)
         var (floorVerts, floorInds) = TestFunctions.CreateTexturedPlane(width: 120f, depth: 120f, uvScale: 24f);
-        var floorTexture = Resources.Get<Texture2D>("grass", (c, g) => ResourceLoader.LoadTexture(c, g, "grass"));
+        var floorTexture = Resources.Get("grass", () => ResourceLoader.LoadTexture(content, graphicsDevice, "grass"));
+        // TODO: fix this possible NRE
         var floor = new Renderable3D<VertexPositionNormalTextureColor>(floorVerts, floorInds, floorTexture);
 
         cube.Position = new Vector3(-2.2f, 0f, 0f);
@@ -54,7 +55,8 @@ public class GameState : BaseState
         Updatables.Add(_camera);
         var projection = GetProjection(graphicsDevice);
 
-        var skyTexture = Resources.Get<Texture2D>("sky", (c, g) => ResourceLoader.LoadTexture(c, g, "sky"));
+        var skyTexture = Resources.Get("sky", () => ResourceLoader.LoadTexture(content, graphicsDevice, "sky"));
+        // TODO: fix this possible NRE
         _skybox = new Skybox(graphicsDevice, skyTexture, size: 80f);
 
     }
