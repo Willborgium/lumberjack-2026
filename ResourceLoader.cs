@@ -3,25 +3,27 @@ using System.IO;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
+using SharpDX.Win32;
 
 namespace Lumberjack;
 
 public static class ResourceLoader
 {
-    // Attempts Content pipeline load first; falls back to streaming common image files
-    public static Texture2D LoadTexture(ContentManager content, GraphicsDevice graphicsDevice, string assetName)
+    public static Texture2D LoadTexture(ContentManager content, GraphicsDevice graphicsDevice, string assetName, bool allowFallback = false)
     {
-        if (content == null) throw new ArgumentNullException(nameof(content));
-        if (graphicsDevice == null) throw new ArgumentNullException(nameof(graphicsDevice));
+        ArgumentNullException.ThrowIfNull(content);
+        ArgumentNullException.ThrowIfNull(graphicsDevice);
 
         try
         {
             return content.Load<Texture2D>(assetName);
         }
-        catch
+        catch (Exception e)
         {
+            if (!allowFallback) throw new InvalidOperationException("Do not use fallback loading without explicit permission", e);
+
             // try common extensions relative to Content.RootDirectory
-            string[] exts = new[] { ".png", ".jpg", ".jpeg", ".bmp", ".gif" };
+            string[] exts = [".png", ".jpg", ".jpeg", ".bmp", ".gif"];
             foreach (var ext in exts)
             {
                 var fileName = assetName.EndsWith(ext, StringComparison.OrdinalIgnoreCase) ? assetName : assetName + ext;
@@ -47,7 +49,7 @@ public static class ResourceLoader
 
     public static Texture2D CreateCircleTexture(GraphicsDevice graphicsDevice, int diameter, Color color)
     {
-        if (graphicsDevice == null) throw new ArgumentNullException(nameof(graphicsDevice));
+        ArgumentNullException.ThrowIfNull(graphicsDevice);
         if (diameter <= 1) throw new ArgumentOutOfRangeException(nameof(diameter), "Diameter must be greater than 1.");
 
         int radius = diameter / 2;

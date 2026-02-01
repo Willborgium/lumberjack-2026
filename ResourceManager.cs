@@ -5,22 +5,33 @@ namespace Lumberjack;
 
 public class ResourceManager : IDisposable
 {
-    private readonly Dictionary<string, object?> _cache = [];
+    private readonly Dictionary<string, object> _cache = [];
 
-    public T? Get<T>(string key, Func<T>? factory = null) where T : class
+    public T Get<T>(string key, Func<T> factory) where T : class
     {
         ArgumentNullException.ThrowIfNull(key);
 
         if (_cache.TryGetValue(key, out var existing))
         {
-            return (T?)existing;
+            return (T)existing;
         }
 
-        var value = factory?.Invoke();
+        var value = factory();
 
         _cache[key] = value;
 
         return value;
+    }
+    public T Get<T>(string key) where T : class
+    {
+        ArgumentNullException.ThrowIfNull(key);
+
+        if (_cache.TryGetValue(key, out var existing))
+        {
+            return (T)existing;
+        }
+
+        throw new KeyNotFoundException($"Resource with key '{key}' not found.");
     }
 
     public void Dispose()

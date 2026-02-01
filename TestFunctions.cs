@@ -7,7 +7,7 @@ namespace Lumberjack;
 
 public static class TestFunctions
 {
-    public static (VertexPositionNormalColor[] vertices, short[] indices) CreateCube(int divisions = 2, float size = 1f)
+    public static Renderable3D<VertexPositionNormalColor> CreateCube(int divisions = 2, float size = 1f)
     {
         // Create subdivided cube by generating a grid on each face and sharing vertices at same positions
         int div = Math.Max(1, divisions);
@@ -105,10 +105,11 @@ public static class TestFunctions
         var normals = ComputeNormals(positions, indices);
         var verts = new VertexPositionNormalColor[positions.Length];
         for (int i = 0; i < positions.Length; i++) verts[i] = new VertexPositionNormalColor(positions[i], normals[i], colors[i]);
-        return (verts, indices);
+
+        return new Renderable3D<VertexPositionNormalColor>(verts, indices);
     }
 
-    public static (VertexPositionNormalColor[] vertices, short[] indices) CreateSphere(int stacks = 8, int slices = 12, float radius = 1f)
+    public static Renderable3D<VertexPositionNormalColor> CreateSphere(int stacks = 8, int slices = 12, float radius = 1f)
     {
         var positions = new List<Vector3>();
         var colors = new List<Color>();
@@ -158,10 +159,10 @@ public static class TestFunctions
         var normals = ComputeNormals(posArr, inds.ToArray());
         var vertsOut = new VertexPositionNormalColor[posArr.Length];
         for (int i = 0; i < posArr.Length; i++) vertsOut[i] = new VertexPositionNormalColor(posArr[i], normals[i], colArr[i]);
-        return (vertsOut, inds.ToArray());
+        return new Renderable3D<VertexPositionNormalColor>(vertsOut, inds.ToArray());
     }
 
-    public static (VertexPositionNormalColor[] vertices, short[] indices) CreatePyramid(float size = 1f, float height = 1.2f)
+    public static Renderable3D<VertexPositionNormalColor> CreatePyramid(float size = 1f, float height = 1.2f)
     {
         float s = size;
         var positions = new Vector3[5];
@@ -171,7 +172,7 @@ public static class TestFunctions
         positions[3] = new Vector3(-s, 0, s);
         positions[4] = new Vector3(0, height, 0);
 
-        var colors = new Color[5]{ Color.Red, Color.Green, Color.Blue, Color.Yellow, Color.White };
+        var colors = new Color[5] { Color.Red, Color.Green, Color.Blue, Color.Yellow, Color.White };
 
         var idx = new short[]
         {
@@ -185,7 +186,7 @@ public static class TestFunctions
         var normals = ComputeNormals(positions, idx);
         var verts = new VertexPositionNormalColor[positions.Length];
         for (int i = 0; i < positions.Length; i++) verts[i] = new VertexPositionNormalColor(positions[i], normals[i], colors[i]);
-        return (verts, idx);
+        return new Renderable3D<VertexPositionNormalColor>(verts, idx);
     }
 
     public static (VertexPositionNormalTextureColor[] vertices, short[] indices, TextureCoordInfo) CreateTexturedCube(float size = 1f)
@@ -227,7 +228,7 @@ public static class TestFunctions
         return (verts, inds, new TextureCoordInfo());
     }
 
-    public static (VertexPositionNormalTextureColor[] vertices, short[] indices) CreateTexturedPlane(float width = 10f, float depth = 10f, float uvScale = 1f)
+    public static Renderable3D<VertexPositionNormalTextureColor> CreateTexturedPlane(Texture2D texture, float width = 10f, float depth = 10f, float uvScale = 1f)
     {
         float hw = width * 0.5f;
         float hd = depth * 0.5f;
@@ -249,13 +250,13 @@ public static class TestFunctions
             0, 3, 2
         };
 
-        return (verts, inds);
+        return new Renderable3D<VertexPositionNormalTextureColor>(verts, inds, texture);
     }
 
     // placeholder to return extra texture info in future (kept for API compatibility)
     public struct TextureCoordInfo { }
 
-    public static (VertexPositionNormalColor[] vertices, short[] indices) CreateRectangularPrism(float width = 1.5f, float height = 0.8f, float depth = 0.6f)
+    public static Renderable3D<VertexPositionNormalColor> CreateRectangularPrism(float width = 1.5f, float height = 0.8f, float depth = 0.6f)
     {
         float hw = width * 0.5f;
         float hh = height * 0.5f;
@@ -271,7 +272,7 @@ public static class TestFunctions
         positions[6] = new Vector3(hw, hh, hd);
         positions[7] = new Vector3(-hw, hh, hd);
 
-        var colors = new Color[8]{ Color.CornflowerBlue, Color.CadetBlue, Color.LightGreen, Color.Gold, Color.OrangeRed, Color.MediumPurple, Color.White, Color.PaleVioletRed };
+        var colors = new Color[8] { Color.CornflowerBlue, Color.CadetBlue, Color.LightGreen, Color.Gold, Color.OrangeRed, Color.MediumPurple, Color.White, Color.PaleVioletRed };
 
         // CCW winding outward for all faces
         var idx = new short[]
@@ -293,7 +294,7 @@ public static class TestFunctions
         var normals = ComputeNormals(positions, idx);
         var verts = new VertexPositionNormalColor[positions.Length];
         for (int i = 0; i < positions.Length; i++) verts[i] = new VertexPositionNormalColor(positions[i], normals[i], colors[i]);
-        return (verts, idx);
+        return new Renderable3D<VertexPositionNormalColor>(verts, idx);
     }
 
     private static Vector3[] ComputeNormals(Vector3[] positions, short[] indices)

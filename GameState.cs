@@ -13,23 +13,13 @@ public class GameState : BaseState
 
     protected override void OnLoad(ContentManager content, GraphicsDevice graphicsDevice)
     {
-        var (cubeVerts, cubeInds) = TestFunctions.CreateCube();
-        var cube = new Renderable3D<VertexPositionNormalColor>(cubeVerts, cubeInds);
+        var cube = TestFunctions.CreateCube();
+        var sphere = TestFunctions.CreateSphere(stacks: 10, slices: 14, radius: 0.9f);
+        var pyramid = TestFunctions.CreatePyramid(size: 0.9f, height: 1.4f);
+        var prism = TestFunctions.CreateRectangularPrism(width: 1.6f, height: 0.8f, depth: 0.6f);
 
-        var (sphereVerts, sphereInds) = TestFunctions.CreateSphere(stacks: 10, slices: 14, radius: 0.9f);
-        var sphere = new Renderable3D<VertexPositionNormalColor>(sphereVerts, sphereInds);
-
-        var (pyramidVerts, pyramidInds) = TestFunctions.CreatePyramid(size: 0.9f, height: 1.4f);
-        var pyramid = new Renderable3D<VertexPositionNormalColor>(pyramidVerts, pyramidInds);
-
-        var (prismVerts, prismInds) = TestFunctions.CreateRectangularPrism(width: 1.6f, height: 0.8f, depth: 0.6f);
-        var prism = new Renderable3D<VertexPositionNormalColor>(prismVerts, prismInds);
-
-        // large floor plane (textured)
-        var (floorVerts, floorInds) = TestFunctions.CreateTexturedPlane(width: 120f, depth: 120f, uvScale: 24f);
         var floorTexture = Resources.Get("grass", () => ResourceLoader.LoadTexture(content, graphicsDevice, "grass"));
-        // TODO: fix this possible NRE
-        var floor = new Renderable3D<VertexPositionNormalTextureColor>(floorVerts, floorInds, floorTexture);
+        var floor = TestFunctions.CreateTexturedPlane(floorTexture, 120f, 120f, 24);
 
         cube.Position = new Vector3(-2.2f, 0f, 0f);
         sphere.Position = new Vector3(2.2f, 0f, 0f);
@@ -56,7 +46,6 @@ public class GameState : BaseState
         var projection = GetProjection(graphicsDevice);
 
         var skyTexture = Resources.Get("sky", () => ResourceLoader.LoadTexture(content, graphicsDevice, "sky"));
-        // TODO: fix this possible NRE
         _skybox = new Skybox(graphicsDevice, skyTexture, size: 80f);
 
     }
