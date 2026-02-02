@@ -288,14 +288,4 @@ public static class TestFunctions
 
         return normals;
     }
-
-    public static Effect CreateColorEffect(ContentManager content)
-    {
-        return content.Load<Effect>("Effects/ColorEffect");
-    }
-
-    public static Effect CreateTextureEffect(ContentManager content)
-    {
-        return content.Load<Effect>("Effects/TextureEffect");
-    }
 }

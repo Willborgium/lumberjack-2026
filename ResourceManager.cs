@@ -1,11 +1,23 @@
 using System;
 using System.Collections.Generic;
+using Microsoft.Xna.Framework.Content;
 
 namespace Lumberjack;
 
-public class ResourceManager : IDisposable
+public class ResourceManager(ContentManager content) : IDisposable
 {
     private readonly Dictionary<string, object> _cache = [];
+
+    public T GetContent<T>(string path) where T : class
+    {
+        return Get(path, () => content.Load<T>(path));
+    }
+
+    public void Set<T>(string key, T value)
+    {
+        ArgumentNullException.ThrowIfNull(key);
+        _cache[key] = value!;
+    }
 
     public T Get<T>(string key, Func<T> factory) where T : class
     {

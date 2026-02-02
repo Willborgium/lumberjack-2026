@@ -8,12 +8,10 @@ public class StateManager(ResourceManager resources, InputService inputService)
 {
     public bool IsExitRequested => _current?.IsExitRequested ?? false;
 
-    public void Initialize(ContentManager content, GraphicsDevice graphicsDevice)
+    public void Initialize(GraphicsDevice graphicsDevice)
     {
         var spriteBatch = new SpriteBatch(graphicsDevice);
-        var font = resources.Get("DebugFont", () => content.Load<SpriteFont>("DebugFont"));
-        resources.Get("color-effect", () => TestFunctions.CreateColorEffect(content));
-        resources.Get("texture-effect", () => TestFunctions.CreateTextureEffect(content));
+        var font = resources.GetContent<SpriteFont>(ContentPaths.DebugFont);
         _debugPanel.Initialize(graphicsDevice, spriteBatch, font);
     }
 

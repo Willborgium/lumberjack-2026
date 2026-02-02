@@ -5,10 +5,6 @@ namespace Lumberjack;
 
 public class Renderable3D<T> : Renderable3DBase where T : struct, IVertexType
 {
-    private readonly T[] _vertices;
-    private readonly short[] _indices;
-    private readonly Texture2D? _texture;
-
     public Renderable3D(Effect effect, T[] vertices, short[] indices)
         : base(effect)
     {
@@ -46,4 +42,8 @@ public class Renderable3D<T> : Renderable3DBase where T : struct, IVertexType
             );
         }
     }
+
+    private readonly T[] _vertices;
+    private readonly short[] _indices;
+    private readonly Texture2D? _texture;
 }

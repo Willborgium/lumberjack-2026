@@ -1,5 +1,4 @@
 using System;
-using System.Configuration;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -9,18 +8,10 @@ public class Skybox : Renderable3D<VertexPositionTexture>, IUpdatable
 {
     private readonly Func<Vector3> _positionProvider;
 
-    public Skybox(Effect effect, GraphicsDevice graphicsDevice, Camera camera, Texture2D texture, float size = 80f)
-        : base(effect, Vertices, Indices)
+    public Skybox(Effect effect, Camera camera, Texture2D texture, float size = 80f)
+        : base(effect, Vertices, Indices, texture)
     {
-        EnableAutoRotation = false;
         Scale = new Vector3(size * 0.5f);
-        Effect = new BasicEffect(graphicsDevice)
-        {
-            TextureEnabled = true,
-            Texture = texture,
-            VertexColorEnabled = false,
-            LightingEnabled = false
-        };
 
         CullMode = CullMode.None;
 

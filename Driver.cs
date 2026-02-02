@@ -11,13 +11,18 @@ public class Driver : Game
 
     public Driver()
     {
-        var _ = new GraphicsDeviceManager(this);
+        var _ = new GraphicsDeviceManager(this)
+        {
+            PreferredBackBufferWidth = 1920,
+            PreferredBackBufferHeight = 1080,
+            IsFullScreen = false,
+        };
 
         Content.RootDirectory = "Content";
         IsMouseVisible = false;
 
         _input = new InputService();
-        _resources = new ResourceManager();
+        _resources = new ResourceManager(Content);
         _stateManager = new StateManager(_resources, _input);
     }
 
@@ -25,11 +30,8 @@ public class Driver : Game
     {
         GraphicsDevice.DepthStencilState = DepthStencilState.Default;
         GraphicsDevice.RasterizerState = new RasterizerState { CullMode = CullMode.CullCounterClockwiseFace };
-        GraphicsDevice.PresentationParameters.BackBufferWidth = 1920;
-        GraphicsDevice.PresentationParameters.BackBufferHeight = 1080;
-        GraphicsDevice.PresentationParameters.IsFullScreen = true;
 
-        _stateManager.Initialize(Content, GraphicsDevice);
+        _stateManager.Initialize(GraphicsDevice);
 
         base.Initialize();
     }

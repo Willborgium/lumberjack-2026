@@ -5,7 +5,12 @@ using Microsoft.Xna.Framework.Input;
 
 namespace Lumberjack;
 
-public class Camera : IUpdatable
+public interface ICamera
+{
+    Matrix GetViewMatrix();
+}
+
+public class Camera : ICamera, IUpdatable
 {
     public Vector3 Position { get; private set; }
     public Vector3 Target { get; private set; }
@@ -45,7 +50,7 @@ public class Camera : IUpdatable
         var deltaX = mouseDelta.X;
         var deltaY = mouseDelta.Y;
 
-        _yaw   -= deltaX * MouseSensitivity;
+        _yaw -= deltaX * MouseSensitivity;
         _pitch -= deltaY * MouseSensitivity;
         _pitch = MathHelper.Clamp(_pitch, -MathF.PI * 0.5f + 0.001f, MathF.PI * 0.5f - 0.001f);
 

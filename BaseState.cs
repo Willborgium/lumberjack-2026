@@ -1,6 +1,4 @@
-using System;
 using System.Collections.Generic;
-using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -10,24 +8,11 @@ namespace Lumberjack;
 
 public abstract class BaseState : IState
 {
-    protected readonly List<Renderable3DBase> Renderables = [];
-    protected readonly List<IUpdatable> Updatables = [];
+    public bool IsExitRequested { get; private set; } = false;
 
-    protected InputService Input = null!;
-    protected ResourceManager Resources = null!;
-    public bool IsExitRequested => _exitRequested;
+    protected Color ClearColor { get; set; } = Color.CornflowerBlue;
 
-    private bool _exitRequested = false;
-    private Matrix _cachedProjection;
-    private int _cachedProjectionWidth = -1;
-    private int _cachedProjectionHeight = -1;
-    private bool _hasCachedProjection;
-
-    protected virtual Vector3 AutoRotationDelta => new(0.01f, 0.02f, 0.03f);
-
-    protected virtual Color ClearColor => Color.CornflowerBlue;
-
-    private IDebugger? _debugger = null;
+    protected ICamera Camera { get; set; } = null!;
 
     public void SetDebugger(IDebugger debugger) { _debugger = debugger; }
 
@@ -46,22 +31,15 @@ public abstract class BaseState : IState
     {
         if (ShouldExit())
         {
-            _exitRequested = true;
+            IsExitRequested = true;
             return;
         }
 
-        UpdateDebugStats();
+        SetDebugStat($"Renderables Count", $"{Renderables.Count}");
 
         foreach (var updatable in Updatables)
         {
             updatable.Update(gameTime);
-        }
-
-        // TODO: move this into the game state
-        foreach (var renderable in Renderables)
-        {
-            if (!renderable.EnableAutoRotation) continue;
-            renderable.Rotation += AutoRotationDelta;
         }
     }
 
@@ -69,7 +47,7 @@ public abstract class BaseState : IState
     {
         ResetGraphicsDevice(graphicsDevice);
 
-        var view = GetView(graphicsDevice);
+        var view = Camera.GetViewMatrix();
         var projection = GetProjection(graphicsDevice);
 
         foreach (var renderable in Renderables)
@@ -95,53 +73,24 @@ public abstract class BaseState : IState
         graphicsDevice.SamplerStates[0] = SamplerState.LinearWrap;
     }
 
-
-
-
-
-
     protected virtual bool ShouldExit() => Input.IsKeyDown(Keys.Escape);
 
-    protected abstract Matrix GetView(GraphicsDevice graphicsDevice);
+    protected abstract void OnLoad(ContentManager content, GraphicsDevice graphicsDevice);
 
     protected virtual Matrix GetProjection(GraphicsDevice graphicsDevice)
     {
-        var vp = graphicsDevice.Viewport;
-        if (!_hasCachedProjection || vp.Width != _cachedProjectionWidth || vp.Height != _cachedProjectionHeight)
-        {
-            _cachedProjection = CalculateProjection(vp);
-            _cachedProjectionWidth = vp.Width;
-            _cachedProjectionHeight = vp.Height;
-            _hasCachedProjection = true;
-        }
-
-        return _cachedProjection;
+        return Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(45f), graphicsDevice.Viewport.AspectRatio, 0.1f, 200f);
     }
-
-    protected virtual Matrix CalculateProjection(Viewport viewport)
-    {
-        return Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(45f), viewport.AspectRatio, 0.1f, 200f);
-    }
-
-    protected abstract void OnLoad(ContentManager content, GraphicsDevice graphicsDevice);
 
     protected void SetDebugStat(string key, string value)
     {
         _debugger?.SetStat(key, value);
     }
 
-    private void UpdateDebugStats()
-    {
-        var camera = GetActiveCamera();
-        if (camera != null)
-        {
+    protected InputService Input = null!;
+    protected ResourceManager Resources = null!;
+    private IDebugger? _debugger = null;
 
-            SetDebugStat($"Camera Position", $"{camera.Position.X:F2}, {camera.Position.Y:F2}, {camera.Position.Z:F2}");
-            SetDebugStat($"Camera Target", $"{camera.Target.X:F2}, {camera.Target.Y:F2}, {camera.Target.Z:F2}");
-        }
-
-        SetDebugStat($"Renderables Count", $"{Renderables.Count}");
-    }
-
-    protected virtual Camera? GetActiveCamera() => null;
+    protected readonly List<Renderable3DBase> Renderables = [];
+    protected readonly List<IUpdatable> Updatables = [];
 }

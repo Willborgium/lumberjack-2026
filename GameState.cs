@@ -6,48 +6,52 @@ namespace Lumberjack;
 
 public class GameState : BaseState
 {
-    protected override Color ClearColor => Color.CornflowerBlue;
-
     protected override void OnLoad(ContentManager content, GraphicsDevice graphicsDevice)
     {
-        var colorEffect = Resources.Get<Effect>("color-effect");
+        var colorEffect = Resources.GetContent<Effect>(ContentPaths.ColorEffect);
+
         var cube = TestFunctions.CreateCube(colorEffect.Clone());
-        var sphere = TestFunctions.CreateSphere(colorEffect.Clone(), 10, 14, 0.9f);
-        var pyramid = TestFunctions.CreatePyramid(colorEffect.Clone(), 0.9f, 1.4f);
-        var prism = TestFunctions.CreateRectangularPrism(colorEffect.Clone(), 1.6f, 0.8f, 0.6f);
-
-        var textureEffect = Resources.Get<Effect>("texture-effect");
-        var floorTexture = Resources.Get("grass", () => ResourceLoader.LoadTexture(content, graphicsDevice, "grass"));
-        var floor = TestFunctions.CreateTexturedPlane(textureEffect.Clone(), floorTexture, 120f, 120f, 24);
-
         cube.Position = new Vector3(-2.2f, 0f, 0f);
-        sphere.Position = new Vector3(2.2f, 0f, 0f);
-        pyramid.Position = new Vector3(0f, 1.6f, 0f);
-        prism.Position = new Vector3(0f, -1.6f, 0f);
-        floor.Position = new Vector3(0f, -2.2f, 0f);
-
         Renderables.Add(cube);
+
+        var sphere = TestFunctions.CreateSphere(colorEffect.Clone(), 10, 14, 0.9f);
+        sphere.Position = new Vector3(2.2f, 0f, 0f);
         Renderables.Add(sphere);
+
+        var pyramid = TestFunctions.CreatePyramid(colorEffect.Clone(), 0.9f, 1.4f);
+        pyramid.Position = new Vector3(0f, 1.6f, 0f);
         Renderables.Add(pyramid);
+
+        var prism = TestFunctions.CreateRectangularPrism(colorEffect.Clone(), 1.6f, 0.8f, 0.6f);
+        prism.Position = new Vector3(0f, -1.6f, 0f);
         Renderables.Add(prism);
+
+        var spinner = new Spinner();
+        spinner.AddTarget(cube);
+        spinner.AddTarget(sphere);
+        spinner.AddTarget(pyramid);
+        spinner.AddTarget(prism);
+        Updatables.Add(spinner);
+
+        var textureEffect = Resources.GetContent<Effect>(ContentPaths.TextureEffect);
+        var floorTexture = Resources.GetContent<Texture2D>(ContentPaths.GrassTexture);
+        var floor = TestFunctions.CreateTexturedPlane(textureEffect.Clone(), floorTexture, 120f, 120f, 24);
+        floor.CullMode = CullMode.None;
+
+        floor.Position = new Vector3(0f, -2.2f, 0f);
         Renderables.Add(floor);
 
-        floor.CullMode = CullMode.None;
-        floor.EnableAutoRotation = false;
+        var camera = new Camera(new Vector3(0, 0, 6f), Vector3.Zero, Input);
+        Camera = camera;
+        camera.SetViewport(graphicsDevice.Viewport);
+        Updatables.Add(camera);
 
-        _camera = new Camera(new Vector3(0, 0, 6f), Vector3.Zero, Input);
-        _camera.SetViewport(graphicsDevice.Viewport);
-        Updatables.Add(_camera);
-        var projection = GetProjection(graphicsDevice);
+        Updatables.Add(new CameraDebugger(camera, SetDebugStat));
 
-        var skyTexture = Resources.Get("sky", () => ResourceLoader.LoadTexture(content, graphicsDevice, "sky"));
-        var skybox = new Skybox(textureEffect.Clone(), graphicsDevice, _camera, skyTexture, 80f);
+        var skyTexture = Resources.GetContent<Texture2D>(ContentPaths.SkyTexture);
+        var skyboxEffect = Resources.GetContent<Effect>(ContentPaths.SkyboxEffect);
+        var skybox = new Skybox(skyboxEffect.Clone(), camera, skyTexture, 200f);
         Renderables.Add(skybox);
+        Updatables.Add(skybox);
     }
-
-    protected override Matrix GetView(GraphicsDevice graphicsDevice) => _camera != null ? _camera.GetViewMatrix() : Matrix.Identity;
-
-    protected override Camera? GetActiveCamera() => _camera;
-
-    private Camera? _camera;
 }
