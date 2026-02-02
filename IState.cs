@@ -10,4 +10,5 @@ public interface IState
     void Update(GameTime gameTime);
     void Render(GameTime gameTime, GraphicsDevice graphicsDevice);
     bool IsExitRequested { get; }
+    void SetDebugger(IDebugger debugger);
 }

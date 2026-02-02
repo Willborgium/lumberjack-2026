@@ -1,25 +1,24 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
-using System.Collections.Generic;
 
 namespace Lumberjack;
 
 public class GameState : BaseState
 {
-    private Camera? _camera;
-    private Skybox? _skybox;
+    protected override Color ClearColor => Color.CornflowerBlue;
 
     protected override void OnLoad(ContentManager content, GraphicsDevice graphicsDevice)
     {
-        var cube = TestFunctions.CreateCube();
-        var sphere = TestFunctions.CreateSphere(stacks: 10, slices: 14, radius: 0.9f);
-        var pyramid = TestFunctions.CreatePyramid(size: 0.9f, height: 1.4f);
-        var prism = TestFunctions.CreateRectangularPrism(width: 1.6f, height: 0.8f, depth: 0.6f);
+        var colorEffect = Resources.Get<Effect>("color-effect");
+        var cube = TestFunctions.CreateCube(colorEffect.Clone());
+        var sphere = TestFunctions.CreateSphere(colorEffect.Clone(), 10, 14, 0.9f);
+        var pyramid = TestFunctions.CreatePyramid(colorEffect.Clone(), 0.9f, 1.4f);
+        var prism = TestFunctions.CreateRectangularPrism(colorEffect.Clone(), 1.6f, 0.8f, 0.6f);
 
+        var textureEffect = Resources.Get<Effect>("texture-effect");
         var floorTexture = Resources.Get("grass", () => ResourceLoader.LoadTexture(content, graphicsDevice, "grass"));
-        var floor = TestFunctions.CreateTexturedPlane(floorTexture, 120f, 120f, 24);
+        var floor = TestFunctions.CreateTexturedPlane(textureEffect.Clone(), floorTexture, 120f, 120f, 24);
 
         cube.Position = new Vector3(-2.2f, 0f, 0f);
         sphere.Position = new Vector3(2.2f, 0f, 0f);
@@ -36,31 +35,19 @@ public class GameState : BaseState
         floor.CullMode = CullMode.None;
         floor.EnableAutoRotation = false;
 
-        // configure graphics states for 3D
-        graphicsDevice.DepthStencilState = DepthStencilState.Default;
-        graphicsDevice.RasterizerState = new RasterizerState { CullMode = CullMode.CullCounterClockwiseFace };
-
         _camera = new Camera(new Vector3(0, 0, 6f), Vector3.Zero, Input);
         _camera.SetViewport(graphicsDevice.Viewport);
         Updatables.Add(_camera);
         var projection = GetProjection(graphicsDevice);
 
         var skyTexture = Resources.Get("sky", () => ResourceLoader.LoadTexture(content, graphicsDevice, "sky"));
-        _skybox = new Skybox(graphicsDevice, skyTexture, size: 80f);
-
+        var skybox = new Skybox(textureEffect.Clone(), graphicsDevice, _camera, skyTexture, 80f);
+        Renderables.Add(skybox);
     }
 
     protected override Matrix GetView(GraphicsDevice graphicsDevice) => _camera != null ? _camera.GetViewMatrix() : Matrix.Identity;
 
-    protected override void DrawSkybox(GraphicsDevice graphicsDevice, Matrix view, Matrix projection)
-    {
-        if (_skybox != null && _camera != null)
-        {
-            _skybox.Draw(graphicsDevice, view, projection, _camera.Position);
-        }
-    }
-
-    protected override Color ClearColor => Color.CornflowerBlue;
-
     protected override Camera? GetActiveCamera() => _camera;
+
+    private Camera? _camera;
 }

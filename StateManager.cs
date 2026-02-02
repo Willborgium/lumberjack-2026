@@ -4,50 +4,43 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace Lumberjack;
 
-public class StateManager
+public class StateManager(ResourceManager resources, InputService inputService)
 {
-    private IState? _current;
-    private readonly ResourceManager _resources;
-    private readonly InputService _input;
-
-    public StateManager(ResourceManager resources, InputService input)
-    {
-        _resources = resources;
-        _input = input;
-    }
-
     public bool IsExitRequested => _current?.IsExitRequested ?? false;
+
+    public void Initialize(ContentManager content, GraphicsDevice graphicsDevice)
+    {
+        var spriteBatch = new SpriteBatch(graphicsDevice);
+        var font = resources.Get("DebugFont", () => content.Load<SpriteFont>("DebugFont"));
+        resources.Get("color-effect", () => TestFunctions.CreateColorEffect(content));
+        resources.Get("texture-effect", () => TestFunctions.CreateTextureEffect(content));
+        _debugPanel.Initialize(graphicsDevice, spriteBatch, font);
+    }
 
     public void SetState(IState state, ContentManager content, GraphicsDevice graphicsDevice)
     {
-        _resources.Get("default-basic-effect", () =>
-        {
-            var fx = new BasicEffect(graphicsDevice)
-            {
-                VertexColorEnabled = true,
-                LightingEnabled = true,
-                SpecularPower = 16f,
-                View = Matrix.Identity,
-                Projection = Matrix.Identity
-            };
-            fx.EnableDefaultLighting();
-            fx.DirectionalLight0.Enabled = true;
-            fx.DirectionalLight0.Direction = Vector3.Normalize(new Vector3(-0.5f, -1f, -0.3f));
-            fx.DirectionalLight0.DiffuseColor = new Vector3(1f, 1f, 1f);
-            fx.DirectionalLight0.SpecularColor = new Vector3(0.3f, 0.3f, 0.3f);
-            fx.AmbientLightColor = new Vector3(0.18f, 0.18f, 0.18f);
-            return fx;
-        });
-
         _current = state;
-        _current.Load(content, graphicsDevice, _resources, _input);
+        _current.SetDebugger(_debugPanel);
+        _current.Load(content, graphicsDevice, resources, inputService);
     }
 
     public void Update(GameTime gameTime)
     {
-        _input.Update(gameTime);
+        inputService.Update(gameTime);
         _current?.Update(gameTime);
+        _debugPanel.Update(gameTime);
     }
 
-    public void Render(GameTime gameTime, GraphicsDevice graphicsDevice) => _current?.Render(gameTime, graphicsDevice);
+    public void Render(GameTime gameTime, GraphicsDevice graphicsDevice)
+    {
+        _current?.Render(gameTime, graphicsDevice);
+
+        if (_debugPanel.Visible)
+        {
+            _debugPanel.Draw(graphicsDevice);
+        }
+    }
+
+    protected readonly DebugPanel _debugPanel = new(inputService);
+    private IState? _current;
 }

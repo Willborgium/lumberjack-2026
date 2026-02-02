@@ -44,3 +44,15 @@
 /processorParam:TextureFormat=Color
 /build:sky.jpg
 
+#begin Effects/ColorEffect.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:DebugMode=Auto
+/build:Effects/ColorEffect.fx
+
+#begin Effects/TextureEffect.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:DebugMode=Auto
+/build:Effects/TextureEffect.fx
+

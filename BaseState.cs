@@ -10,46 +10,36 @@ namespace Lumberjack;
 
 public abstract class BaseState : IState
 {
-    protected readonly List<Renderable3DBase> Renderables = new List<Renderable3DBase>();
-    protected readonly List<IUpdatable> Updatables = new List<IUpdatable>();
+    protected readonly List<Renderable3DBase> Renderables = [];
+    protected readonly List<IUpdatable> Updatables = [];
 
     protected InputService Input = null!;
     protected ResourceManager Resources = null!;
-    protected DebugPanel? DebugPanel;
-    protected BasicEffect DefaultEffect => Resources.Get<BasicEffect>("default-basic-effect") ?? throw new InvalidOperationException("Default effect not found in resources.");
+    public bool IsExitRequested => _exitRequested;
 
-    private bool _exitRequested;
+    private bool _exitRequested = false;
     private Matrix _cachedProjection;
     private int _cachedProjectionWidth = -1;
     private int _cachedProjectionHeight = -1;
     private bool _hasCachedProjection;
 
-    public bool IsExitRequested => _exitRequested;
+    protected virtual Vector3 AutoRotationDelta => new(0.01f, 0.02f, 0.03f);
+
+    protected virtual Color ClearColor => Color.CornflowerBlue;
+
+    private IDebugger? _debugger = null;
+
+    public void SetDebugger(IDebugger debugger) { _debugger = debugger; }
 
     public void Load(ContentManager content, GraphicsDevice graphicsDevice, ResourceManager resources, InputService input)
     {
         Input = input;
         Resources = resources;
+
         Renderables.Clear();
         Updatables.Clear();
-        _exitRequested = false;
 
         OnLoad(content, graphicsDevice);
-
-        // Ensure every state gets a debug panel
-        DebugPanel ??= new DebugPanel();
-        ConfigureDebugPanel(content, graphicsDevice);
-        if (DebugPanel != null)
-        {
-            Updatables.Add(DebugPanel);
-        }
-
-        // Let derived class customize effect defaults
-        ConfigureEffectDefaults(graphicsDevice);
-
-        // Ensure overlay projection starts correct
-        var projection = GetProjection(graphicsDevice);
-        DebugPanel?.UpdateOverlayProjection(projection);
     }
 
     public void Update(GameTime gameTime)
@@ -60,11 +50,14 @@ public abstract class BaseState : IState
             return;
         }
 
+        UpdateDebugStats();
+
         foreach (var updatable in Updatables)
         {
             updatable.Update(gameTime);
         }
 
+        // TODO: move this into the game state
         foreach (var renderable in Renderables)
         {
             if (!renderable.EnableAutoRotation) continue;
@@ -74,45 +67,40 @@ public abstract class BaseState : IState
 
     public void Render(GameTime gameTime, GraphicsDevice graphicsDevice)
     {
-        graphicsDevice.Clear(ClearColor);
-
-        // ensure 3D pipeline state is restored before drawing meshes (SpriteBatch changes these)
-        graphicsDevice.DepthStencilState = DepthStencilState.Default;
-        graphicsDevice.RasterizerState = new RasterizerState { CullMode = CullMode.CullCounterClockwiseFace };
-        graphicsDevice.BlendState = BlendState.Opaque;
-        graphicsDevice.SamplerStates[0] = SamplerState.LinearWrap;
+        ResetGraphicsDevice(graphicsDevice);
 
         var view = GetView(graphicsDevice);
         var projection = GetProjection(graphicsDevice);
 
-        DebugPanel?.UpdateOverlayProjection(projection);
-
-        DrawSkybox(graphicsDevice, view, projection);
-
-        var defaultEffect = DefaultEffect;
-        foreach (var group in Renderables.GroupBy(r => r.Effect ?? defaultEffect))
+        foreach (var renderable in Renderables)
         {
-            var fx = group.Key;
-            fx.View = view;
-            fx.Projection = projection;
-
-            foreach (var renderable in group)
+            graphicsDevice.RasterizerState = renderable.CullMode switch
             {
-                renderable.Draw(fx, graphicsDevice);
-            }
-        }
+                CullMode.CullClockwiseFace => RasterizerState.CullClockwise,
+                CullMode.CullCounterClockwiseFace => RasterizerState.CullCounterClockwise,
+                _ => RasterizerState.CullNone
+            };
 
-        DebugPanel?.DrawOverlay(graphicsDevice, view);
-        DebugPanel?.Draw(graphicsDevice);
+            renderable.Draw(graphicsDevice, view, projection);
+        }
     }
 
+    private void ResetGraphicsDevice(GraphicsDevice graphicsDevice)
+    {
+        graphicsDevice.Clear(ClearColor);
+
+        graphicsDevice.DepthStencilState = DepthStencilState.Default;
+        graphicsDevice.RasterizerState = new RasterizerState { CullMode = CullMode.CullCounterClockwiseFace };
+        graphicsDevice.BlendState = BlendState.Opaque;
+        graphicsDevice.SamplerStates[0] = SamplerState.LinearWrap;
+    }
+
+
+
+
+
+
     protected virtual bool ShouldExit() => Input.IsKeyDown(Keys.Escape);
-
-    protected virtual Vector3 AutoRotationDelta => new Vector3(0.01f, 0.02f, 0.03f);
-
-    protected virtual Color ClearColor => Color.CornflowerBlue;
-
-    protected virtual void DrawSkybox(GraphicsDevice graphicsDevice, Matrix view, Matrix projection) { }
 
     protected abstract Matrix GetView(GraphicsDevice graphicsDevice);
 
@@ -137,19 +125,22 @@ public abstract class BaseState : IState
 
     protected abstract void OnLoad(ContentManager content, GraphicsDevice graphicsDevice);
 
-    protected virtual void ConfigureEffectDefaults(GraphicsDevice graphicsDevice)
+    protected void SetDebugStat(string key, string value)
     {
-        // Default effect is expected to be created by the state manager and stored in resources.
+        _debugger?.SetStat(key, value);
     }
 
-    protected virtual void ConfigureDebugPanel(ContentManager content, GraphicsDevice graphicsDevice)
+    private void UpdateDebugStats()
     {
-        if (DebugPanel == null) return;
+        var camera = GetActiveCamera();
+        if (camera != null)
+        {
 
-        var spriteBatch = new SpriteBatch(graphicsDevice);
-        DebugPanel.Load(content, graphicsDevice, spriteBatch, "DebugFont");
-        DebugPanel.ConfigureStatProviders(GetActiveCamera, () => Renderables.Count);
-        DebugPanel.ConfigureOverlay(graphicsDevice, GetProjection(graphicsDevice), () => Renderables);
+            SetDebugStat($"Camera Position", $"{camera.Position.X:F2}, {camera.Position.Y:F2}, {camera.Position.Z:F2}");
+            SetDebugStat($"Camera Target", $"{camera.Target.X:F2}, {camera.Target.Y:F2}, {camera.Target.Z:F2}");
+        }
+
+        SetDebugStat($"Renderables Count", $"{Renderables.Count}");
     }
 
     protected virtual Camera? GetActiveCamera() => null;

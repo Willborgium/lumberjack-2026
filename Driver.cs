@@ -29,6 +29,8 @@ public class Driver : Game
         GraphicsDevice.PresentationParameters.BackBufferHeight = 1080;
         GraphicsDevice.PresentationParameters.IsFullScreen = true;
 
+        _stateManager.Initialize(Content, GraphicsDevice);
+
         base.Initialize();
     }
 
