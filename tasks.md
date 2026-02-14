@@ -7,6 +7,8 @@
 1. Add debug panel visualization for active movement actions and translated velocity per target.
 2. Add optional one-frame collision event callbacks to avoid repeated per-frame collision spam.
 3. Add oriented box support (OBB) once rotation-aware collisions become necessary.
+4. Add click-hit feedback (outline/highlight) so picks are visible without opening logs.
+5. Add occlusion-aware third-person camera collision handling against environment bounds.
 
 # Completed
 
@@ -27,3 +29,9 @@
 5. Implement a simple effect/render state stack to manage renderable-specific GPU state changes — `2d92393`
 6. Implement basic action mapping system that translates inputs (like keyboard buttons or mouse input) to actions — `2d92393`
 7. Make resource manager thread safe (cache synchronization scope) — `64e0c48`
+8. Switch to a third-person style camera
+   1. make player a cube
+   2. preserve the current camera implementation in a POV camera class, in case we want to use it again later — `3096181`
+9. review cube and prism vertices, as they appear to be rendering inside out. make sure they are defined in the correct order such that they render properly and the same way as the sphere and pyramid. — `3096181`
+10. implement ray tracing so that objects can be clicked by the mouse. demonstrate this by having clicked objects log to the debug console.
+11. clickability should be defined by a clickable updatable being registered with a target that can be clicked, and a receiver that does something when it is clicked. this system will look similar to the camera movement system. — `3096181`

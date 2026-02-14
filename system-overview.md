@@ -34,10 +34,23 @@
   - `IMovementActionEmitter` (action source)
   - `GroundMovementTranslator` (actions -> translation vector)
   - `TranslationApplier` (translation -> translatable target)
-- Camera look/orientation is still handled by `Camera.Update`, while position movement now comes from the translation pipeline.
+- Camera look/orientation is handled by the active camera implementation update (`POVCamera` or `ThirdPersonCamera`), while target translation comes from the movement pipeline.
+- Camera implementations now split into:
+  - `POVCamera` (preserved first-person implementation)
+  - `ThirdPersonCamera` (active gameplay camera with smoothing)
 - Demo wiring in `GameState`:
-  - player camera movement uses `InputMovementActionEmitter`
-  - one cube uses `PatternMovementActionEmitter` for scripted NPC-style motion
+  - player cube movement uses `InputMovementActionEmitter`
+  - NPC prism movement uses `PatternMovementActionEmitter` for scripted motion
+  - `ThirdPersonCamera` follows the player cube and provides movement frame vectors
+
+## Click Selection System
+
+- Clickability uses a registered target/receiver model:
+  - `IClickTarget` performs hit tests
+  - `IClickReceiver` handles click responses
+  - `ClickSelectionSystem` is an updatable that casts a ray on click actions
+- Input uses `InputAction.PrimaryClick` bound to mouse left button with `Pressed` trigger.
+- v1 hit testing uses bounding spheres (`SphereClickTarget`) and logs selected object ids to `DebugLog`.
 
 ## Collision System (v1)
 
@@ -61,3 +74,4 @@
 - Render state stack currently snapshots slot `SamplerStates[0]`; expand if multi-texturing is introduced.
 - Resource cache is synchronized, but this does not make all asset creation safe on background threads.
 - Collision shapes are axis-aligned/no-rotation in v1; oriented/mesh collisions are out of scope for now.
+- Winding convention is now enforced consistently for generated cube/prism geometry to match project culling behavior.
