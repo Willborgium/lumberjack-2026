@@ -27,13 +27,29 @@ public class InputService : IUpdatable
     public bool IsKeyPressed(Keys key) => _currentKeyboard.IsKeyDown(key) && !_previousKeyboard.IsKeyDown(key);
     public bool IsKeyReleased(Keys key) => !_currentKeyboard.IsKeyDown(key) && _previousKeyboard.IsKeyDown(key);
 
+    public bool IsMouseDown(MouseButton button) => GetMouseButtonState(_currentMouse, button);
+    public bool IsMousePressed(MouseButton button) => GetMouseButtonState(_currentMouse, button) && !GetMouseButtonState(_previousMouse, button);
+    public bool IsMouseReleased(MouseButton button) => !GetMouseButtonState(_currentMouse, button) && GetMouseButtonState(_previousMouse, button);
+
     public void BindAction(InputAction action, InputTrigger trigger, params Keys[] keys)
     {
         ArgumentNullException.ThrowIfNull(keys);
         var bindings = new List<ActionBinding>(keys.Length);
         foreach (var key in keys)
         {
-            bindings.Add(new ActionBinding(key, trigger));
+            bindings.Add(ActionBinding.ForKey(key, trigger));
+        }
+
+        _actionBindings[action] = bindings;
+    }
+
+    public void BindAction(InputAction action, InputTrigger trigger, params MouseButton[] mouseButtons)
+    {
+        ArgumentNullException.ThrowIfNull(mouseButtons);
+        var bindings = new List<ActionBinding>(mouseButtons.Length);
+        foreach (var button in mouseButtons)
+        {
+            bindings.Add(ActionBinding.ForMouse(button, trigger));
         }
 
         _actionBindings[action] = bindings;
@@ -99,20 +115,53 @@ public class InputService : IUpdatable
         BindAction(InputAction.MoveLeft, InputTrigger.Down, Keys.A);
         BindAction(InputAction.MoveRight, InputTrigger.Down, Keys.D);
         BindAction(InputAction.Run, InputTrigger.Down, Keys.LeftShift, Keys.RightShift);
+        BindAction(InputAction.PrimaryClick, InputTrigger.Pressed, MouseButton.Left);
     }
 
     private bool Matches(ActionBinding binding)
     {
-        return binding.Trigger switch
+        return binding.Device switch
         {
-            InputTrigger.Down => IsKeyDown(binding.Key),
-            InputTrigger.Pressed => IsKeyPressed(binding.Key),
-            InputTrigger.Released => IsKeyReleased(binding.Key),
+            ActionBindingDevice.Keyboard => binding.Trigger switch
+            {
+                InputTrigger.Down => IsKeyDown(binding.Key),
+                InputTrigger.Pressed => IsKeyPressed(binding.Key),
+                InputTrigger.Released => IsKeyReleased(binding.Key),
+                _ => false
+            },
+            ActionBindingDevice.Mouse => binding.Trigger switch
+            {
+                InputTrigger.Down => IsMouseDown(binding.MouseButton),
+                InputTrigger.Pressed => IsMousePressed(binding.MouseButton),
+                InputTrigger.Released => IsMouseReleased(binding.MouseButton),
+                _ => false
+            },
             _ => false
         };
     }
 
-    private readonly record struct ActionBinding(Keys Key, InputTrigger Trigger);
+    private static bool GetMouseButtonState(MouseState state, MouseButton button)
+    {
+        return button switch
+        {
+            MouseButton.Left => state.LeftButton == ButtonState.Pressed,
+            MouseButton.Middle => state.MiddleButton == ButtonState.Pressed,
+            MouseButton.Right => state.RightButton == ButtonState.Pressed,
+            _ => false
+        };
+    }
+
+    private readonly record struct ActionBinding(ActionBindingDevice Device, InputTrigger Trigger, Keys Key, MouseButton MouseButton)
+    {
+        public static ActionBinding ForKey(Keys key, InputTrigger trigger) => new(ActionBindingDevice.Keyboard, trigger, key, MouseButton.Left);
+        public static ActionBinding ForMouse(MouseButton button, InputTrigger trigger) => new(ActionBindingDevice.Mouse, trigger, Keys.None, button);
+    }
+
+    private enum ActionBindingDevice
+    {
+        Keyboard,
+        Mouse
+    }
 }
 
 public enum InputTrigger
@@ -120,4 +169,11 @@ public enum InputTrigger
     Down,
     Pressed,
     Released
+}
+
+public enum MouseButton
+{
+    Left,
+    Middle,
+    Right
 }

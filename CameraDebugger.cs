@@ -3,7 +3,7 @@ using Microsoft.Xna.Framework;
 
 namespace Lumberjack;
 
-public class CameraDebugger(Camera camera, Action<string, string> SetDebugStat) : IUpdatable
+public class CameraDebugger(ICamera camera, Action<string, string> SetDebugStat) : IUpdatable
 {
     public void Update(GameTime gameTime)
     {

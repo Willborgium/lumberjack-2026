@@ -88,14 +88,14 @@ public static class TestFunctions
                     short b = map[ix + 1, iy];
                     short c = map[ix + 1, iy + 1];
                     short d = map[ix, iy + 1];
-                    // two triangles: a,b,c and a,c,d
+                    // two triangles with consistent winding for project-wide backface culling.
                     indicesList.Add(a);
-                    indicesList.Add(b);
                     indicesList.Add(c);
+                    indicesList.Add(b);
 
                     indicesList.Add(a);
-                    indicesList.Add(c);
                     indicesList.Add(d);
+                    indicesList.Add(c);
                 }
             }
         }
@@ -233,21 +233,21 @@ public static class TestFunctions
 
         var colors = new Color[8] { Color.CornflowerBlue, Color.CadetBlue, Color.LightGreen, Color.Gold, Color.OrangeRed, Color.MediumPurple, Color.White, Color.PaleVioletRed };
 
-        // CCW winding outward for all faces
+        // Face winding is intentionally consistent with the project's global culling convention.
         var idx = new short[]
         {
             // back (-Z)
-            1,0,3, 1,3,2,
+            1,3,0, 1,2,3,
             // front (+Z)
-            4,5,6, 4,6,7,
+            4,6,5, 4,7,6,
             // left (-X)
-            0,4,7, 0,7,3,
+            0,7,4, 0,3,7,
             // right (+X)
-            5,1,2, 5,2,6,
+            5,2,1, 5,6,2,
             // top (+Y)
-            3,7,6, 3,6,2,
+            3,6,7, 3,2,6,
             // bottom (-Y)
-            0,1,5, 0,5,4
+            0,5,1, 0,4,5
         };
 
         var normals = ComputeNormals(positions, idx);

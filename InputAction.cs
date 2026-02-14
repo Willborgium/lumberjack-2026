@@ -4,6 +4,7 @@ public enum InputAction
 {
     Exit,
     ToggleDebugPanel,
+    PrimaryClick,
     MoveForward,
     MoveBackward,
     MoveLeft,

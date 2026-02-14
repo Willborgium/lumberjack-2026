@@ -8,7 +8,7 @@ public class Skybox : Renderable3D<VertexPositionTexture>, IUpdatable
 {
     private readonly Func<Vector3> _positionProvider;
 
-    public Skybox(Effect effect, Camera camera, Texture2D texture, float size = 80f)
+    public Skybox(Effect effect, ICamera camera, Texture2D texture, float size = 80f)
         : base(effect, Vertices, Indices, texture)
     {
         Scale = new Vector3(size * 0.5f);
