@@ -1,12 +1,12 @@
 using System.Collections.Generic;
+using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
 
 namespace Lumberjack;
 
-public abstract class BaseState : IState
+public abstract class BaseState : IState, IDisposable
 {
     public bool IsExitRequested { get; private set; } = false;
 
@@ -18,6 +18,8 @@ public abstract class BaseState : IState
 
     public void Load(ContentManager content, GraphicsDevice graphicsDevice, ResourceManager resources, InputService input)
     {
+        DisposeTrackedObjects();
+
         Input = input;
         Resources = resources;
 
@@ -52,14 +54,25 @@ public abstract class BaseState : IState
 
         foreach (var renderable in Renderables)
         {
-            graphicsDevice.RasterizerState = renderable.CullMode switch
+            PushRenderState(graphicsDevice);
+            try
             {
-                CullMode.CullClockwiseFace => RasterizerState.CullClockwise,
-                CullMode.CullCounterClockwiseFace => RasterizerState.CullCounterClockwise,
-                _ => RasterizerState.CullNone
-            };
+                if (!renderable.SetState(graphicsDevice))
+                {
+                    graphicsDevice.RasterizerState = renderable.CullMode switch
+                    {
+                        CullMode.CullClockwiseFace => RasterizerState.CullClockwise,
+                        CullMode.CullCounterClockwiseFace => RasterizerState.CullCounterClockwise,
+                        _ => RasterizerState.CullNone
+                    };
+                }
 
-            renderable.Draw(graphicsDevice, view, projection);
+                renderable.Draw(graphicsDevice, view, projection);
+            }
+            finally
+            {
+                PopRenderState(graphicsDevice);
+            }
         }
     }
 
@@ -73,7 +86,7 @@ public abstract class BaseState : IState
         graphicsDevice.SamplerStates[0] = SamplerState.LinearWrap;
     }
 
-    protected virtual bool ShouldExit() => Input.IsKeyDown(Keys.Escape);
+    protected virtual bool ShouldExit() => Input.IsActionDown(InputAction.Exit);
 
     protected abstract void OnLoad(ContentManager content, GraphicsDevice graphicsDevice);
 
@@ -90,7 +103,77 @@ public abstract class BaseState : IState
     protected InputService Input = null!;
     protected ResourceManager Resources = null!;
     private IDebugger? _debugger = null;
+    private readonly Stack<RenderStateSnapshot> _renderStateStack = [];
 
     protected readonly List<Renderable3DBase> Renderables = [];
     protected readonly List<IUpdatable> Updatables = [];
+
+    public virtual void Dispose()
+    {
+        DisposeTrackedObjects();
+    }
+
+    private void DisposeTrackedObjects()
+    {
+        var disposed = new HashSet<object>(ReferenceEqualityComparer.Instance);
+
+        foreach (var renderable in Renderables)
+        {
+            disposed.Add(renderable);
+            renderable.Dispose();
+        }
+
+        foreach (var updatable in Updatables)
+        {
+            if (!disposed.Add(updatable))
+            {
+                continue;
+            }
+
+            if (updatable is IDisposable disposable)
+            {
+                disposable.Dispose();
+            }
+        }
+
+        Renderables.Clear();
+        Updatables.Clear();
+    }
+
+    private void PushRenderState(GraphicsDevice graphicsDevice)
+    {
+        _renderStateStack.Push(new RenderStateSnapshot(
+            graphicsDevice.DepthStencilState,
+            graphicsDevice.RasterizerState,
+            graphicsDevice.BlendState,
+            graphicsDevice.SamplerStates[0]));
+    }
+
+    private void PopRenderState(GraphicsDevice graphicsDevice)
+    {
+        if (_renderStateStack.Count == 0)
+        {
+            return;
+        }
+
+        var state = _renderStateStack.Pop();
+        graphicsDevice.DepthStencilState = state.DepthStencilState;
+        graphicsDevice.RasterizerState = state.RasterizerState;
+        graphicsDevice.BlendState = state.BlendState;
+        graphicsDevice.SamplerStates[0] = state.SamplerState;
+    }
+
+    private readonly record struct RenderStateSnapshot(
+        DepthStencilState DepthStencilState,
+        RasterizerState RasterizerState,
+        BlendState BlendState,
+        SamplerState SamplerState);
+
+    private sealed class ReferenceEqualityComparer : IEqualityComparer<object>
+    {
+        public static ReferenceEqualityComparer Instance { get; } = new();
+
+        public new bool Equals(object? x, object? y) => ReferenceEquals(x, y);
+        public int GetHashCode(object obj) => System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(obj);
+    }
 }

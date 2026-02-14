@@ -65,6 +65,7 @@ public class Driver : Game
     {
         if (disposing)
         {
+            _stateManager.Dispose();
             _resources.Dispose();
         }
 

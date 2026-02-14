@@ -1,22 +1,28 @@
+using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace Lumberjack;
 
-public class StateManager(ResourceManager resources, InputService inputService)
+public class StateManager(ResourceManager resources, InputService inputService) : IDisposable
 {
     public bool IsExitRequested => _current?.IsExitRequested ?? false;
 
     public void Initialize(GraphicsDevice graphicsDevice)
     {
-        var spriteBatch = new SpriteBatch(graphicsDevice);
+        _spriteBatch = new SpriteBatch(graphicsDevice);
         var font = resources.GetContent<SpriteFont>(ContentPaths.DebugFont);
-        _debugPanel.Initialize(graphicsDevice, spriteBatch, font);
+        _debugPanel.Initialize(graphicsDevice, _spriteBatch, font);
     }
 
     public void SetState(IState state, ContentManager content, GraphicsDevice graphicsDevice)
     {
+        if (_current is IDisposable disposable)
+        {
+            disposable.Dispose();
+        }
+
         _current = state;
         _current.SetDebugger(_debugPanel);
         _current.Load(content, graphicsDevice, resources, inputService);
@@ -39,6 +45,20 @@ public class StateManager(ResourceManager resources, InputService inputService)
         }
     }
 
+    public void Dispose()
+    {
+        if (_current is IDisposable disposable)
+        {
+            disposable.Dispose();
+            _current = null;
+        }
+
+        _debugPanel.Dispose();
+        _spriteBatch?.Dispose();
+        _spriteBatch = null;
+    }
+
     protected readonly DebugPanel _debugPanel = new(inputService);
     private IState? _current;
+    private SpriteBatch? _spriteBatch;
 }

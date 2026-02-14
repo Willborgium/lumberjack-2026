@@ -1,7 +1,7 @@
 using System.Collections.Generic;
+using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
 
 namespace Lumberjack;
 
@@ -10,7 +10,7 @@ public interface IDebugger
     void SetStat(string key, string value);
 }
 
-public class DebugPanel(InputService inputService) : IUpdatable, IDebugger
+public class DebugPanel(InputService inputService) : IUpdatable, IDebugger, IDisposable
 {
     private readonly Dictionary<string, string> _stats = [];
     private SpriteFont? _font;
@@ -37,7 +37,7 @@ public class DebugPanel(InputService inputService) : IUpdatable, IDebugger
 
     public void Update(GameTime gameTime)
     {
-        if (inputService.IsKeyPressed(Keys.OemTilde))
+        if (inputService.IsActionPressed(InputAction.ToggleDebugPanel))
         {
             Visible = !Visible;
         }
@@ -82,5 +82,11 @@ public class DebugPanel(InputService inputService) : IUpdatable, IDebugger
         }
 
         _spriteBatch.End();
+    }
+
+    public void Dispose()
+    {
+        _background?.Dispose();
+        _background = null;
     }
 }

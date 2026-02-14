@@ -4,11 +4,12 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace Lumberjack;
 
-public abstract class Renderable3DBase(Effect effect)
+public abstract class Renderable3DBase(Effect effect) : IDisposable
 {
-    public CullMode CullMode { get; set; } = CullMode.CullClockwiseFace;
+    public CullMode CullMode { get; set; } = CullMode.CullCounterClockwiseFace;
 
     public Effect Effect { get; set; } = effect;
+    public bool OwnsEffect { get; set; } = true;
 
     public Vector3 Position
     {
@@ -34,6 +35,21 @@ public abstract class Renderable3DBase(Effect effect)
 
     public abstract void Draw(GraphicsDevice graphicsDevice, Matrix view, Matrix projection);
 
+    public virtual void Dispose()
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        if (OwnsEffect)
+        {
+            Effect.Dispose();
+        }
+
+        _disposed = true;
+    }
+
     private Matrix GetWorld()
     {
         if (_dirty)
@@ -50,4 +66,5 @@ public abstract class Renderable3DBase(Effect effect)
 
     private Matrix _worldCache = Matrix.Identity;
     private bool _dirty = true;
+    private bool _disposed;
 }

@@ -1,7 +1,6 @@
 using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
 
 namespace Lumberjack;
 
@@ -44,7 +43,6 @@ public class Camera : ICamera, IUpdatable
 
     public void Update(GameTime gameTime)
     {
-        var kb = _input.CurrentKeyboard;
         var mouseDelta = _input.MouseDelta;
 
         var deltaX = mouseDelta.X;
@@ -59,16 +57,16 @@ public class Camera : ICamera, IUpdatable
         Vector3 rightYaw = Vector3.Normalize(Vector3.Cross(Vector3.Up, forwardYaw));
 
         Vector3 move = Vector3.Zero;
-        if (kb.IsKeyDown(Keys.W)) move += forwardYaw;
-        if (kb.IsKeyDown(Keys.S)) move -= forwardYaw;
-        if (kb.IsKeyDown(Keys.A)) move += rightYaw;
-        if (kb.IsKeyDown(Keys.D)) move -= rightYaw;
+        if (_input.IsActionDown(InputAction.MoveForward)) move += forwardYaw;
+        if (_input.IsActionDown(InputAction.MoveBackward)) move -= forwardYaw;
+        if (_input.IsActionDown(InputAction.MoveLeft)) move += rightYaw;
+        if (_input.IsActionDown(InputAction.MoveRight)) move -= rightYaw;
 
         if (move != Vector3.Zero)
         {
             move.Normalize();
             float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
-            float speed = MoveSpeed * (kb.IsKeyDown(Keys.LeftShift) || kb.IsKeyDown(Keys.RightShift) ? RunMultiplier : 1f);
+            float speed = MoveSpeed * (_input.IsActionDown(InputAction.Run) ? RunMultiplier : 1f);
             Position += move * speed * dt;
         }
 
