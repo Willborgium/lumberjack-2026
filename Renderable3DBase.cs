@@ -4,7 +4,7 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace Lumberjack;
 
-public abstract class Renderable3DBase(Effect effect) : IDisposable
+public abstract class Renderable3DBase(Effect effect) : IDisposable, ITranslatable
 {
     public CullMode CullMode { get; set; } = CullMode.CullCounterClockwiseFace;
 
@@ -34,6 +34,11 @@ public abstract class Renderable3DBase(Effect effect) : IDisposable
     public virtual bool SetState(GraphicsDevice graphicsDevice) { return false; }
 
     public abstract void Draw(GraphicsDevice graphicsDevice, Matrix view, Matrix projection);
+
+    public void Translate(Vector3 delta)
+    {
+        Position += delta;
+    }
 
     public virtual void Dispose()
     {

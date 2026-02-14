@@ -9,12 +9,10 @@ public interface ICamera
     Matrix GetViewMatrix();
 }
 
-public class Camera : ICamera, IUpdatable
+public class Camera : ICamera, IUpdatable, ITranslatable, IMovementFrameProvider
 {
     public Vector3 Position { get; private set; }
     public Vector3 Target { get; private set; }
-    public float MoveSpeed { get; set; } = 4f;
-    public float RunMultiplier { get; set; } = 2.5f;
     public float MouseSensitivity { get; set; } = .005f;
 
     private readonly InputService _input;
@@ -52,26 +50,7 @@ public class Camera : ICamera, IUpdatable
         _pitch -= deltaY * MouseSensitivity;
         _pitch = MathHelper.Clamp(_pitch, -MathF.PI * 0.5f + 0.001f, MathF.PI * 0.5f - 0.001f);
 
-        // Ground-relative movement (yaw only) for FPS-style controls
-        Vector3 forwardYaw = new Vector3(MathF.Sin(_yaw), 0f, MathF.Cos(_yaw));
-        Vector3 rightYaw = Vector3.Normalize(Vector3.Cross(Vector3.Up, forwardYaw));
-
-        Vector3 move = Vector3.Zero;
-        if (_input.IsActionDown(InputAction.MoveForward)) move += forwardYaw;
-        if (_input.IsActionDown(InputAction.MoveBackward)) move -= forwardYaw;
-        if (_input.IsActionDown(InputAction.MoveLeft)) move += rightYaw;
-        if (_input.IsActionDown(InputAction.MoveRight)) move -= rightYaw;
-
-        if (move != Vector3.Zero)
-        {
-            move.Normalize();
-            float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
-            float speed = MoveSpeed * (_input.IsActionDown(InputAction.Run) ? RunMultiplier : 1f);
-            Position += move * speed * dt;
-        }
-
-        Vector3 forward = new Vector3(MathF.Sin(_yaw) * MathF.Cos(_pitch), MathF.Sin(_pitch), MathF.Cos(_yaw) * MathF.Cos(_pitch));
-        Target = Position + forward;
+        RefreshTarget();
 
         // recenter when close to window edges to allow indefinite turning
         var mouse = _input.CurrentMouse;
@@ -89,4 +68,44 @@ public class Camera : ICamera, IUpdatable
     }
 
     public Matrix GetViewMatrix() => Matrix.CreateLookAt(Position, Target, Vector3.Up);
+
+    public void Translate(Vector3 delta)
+    {
+        Position += delta;
+        RefreshTarget();
+    }
+
+    public Vector3 Forward
+    {
+        get
+        {
+            var forward = new Vector3(MathF.Sin(_yaw), 0f, MathF.Cos(_yaw));
+            if (forward.LengthSquared() > 0.000001f)
+            {
+                forward.Normalize();
+            }
+
+            return forward;
+        }
+    }
+
+    public Vector3 Right
+    {
+        get
+        {
+            var right = Vector3.Cross(Forward, Vector3.Up);
+            if (right.LengthSquared() > 0.000001f)
+            {
+                right.Normalize();
+            }
+
+            return right;
+        }
+    }
+
+    private void RefreshTarget()
+    {
+        Vector3 forward = new Vector3(MathF.Sin(_yaw) * MathF.Cos(_pitch), MathF.Sin(_pitch), MathF.Cos(_yaw) * MathF.Cos(_pitch));
+        Target = Position + forward;
+    }
 }

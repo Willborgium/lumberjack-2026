@@ -86,7 +86,7 @@ public abstract class BaseState : IState, IDisposable
         graphicsDevice.SamplerStates[0] = SamplerState.LinearWrap;
     }
 
-    protected virtual bool ShouldExit() => Input.IsActionDown(InputAction.Exit);
+    protected virtual bool ShouldExit() => Input.IsAction(InputAction.Exit);
 
     protected abstract void OnLoad(ContentManager content, GraphicsDevice graphicsDevice);
 

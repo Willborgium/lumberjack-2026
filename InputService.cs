@@ -7,7 +7,7 @@ namespace Lumberjack;
 
 public class InputService : IUpdatable
 {
-    private readonly Dictionary<InputAction, List<Keys>> _actionBindings = new();
+    private readonly Dictionary<InputAction, List<ActionBinding>> _actionBindings = new();
 
     private KeyboardState _currentKeyboard;
     private KeyboardState _previousKeyboard;
@@ -27,15 +27,40 @@ public class InputService : IUpdatable
     public bool IsKeyPressed(Keys key) => _currentKeyboard.IsKeyDown(key) && !_previousKeyboard.IsKeyDown(key);
     public bool IsKeyReleased(Keys key) => !_currentKeyboard.IsKeyDown(key) && _previousKeyboard.IsKeyDown(key);
 
-    public void BindAction(InputAction action, params Keys[] keys)
+    public void BindAction(InputAction action, InputTrigger trigger, params Keys[] keys)
     {
         ArgumentNullException.ThrowIfNull(keys);
-        _actionBindings[action] = [.. keys];
+        var bindings = new List<ActionBinding>(keys.Length);
+        foreach (var key in keys)
+        {
+            bindings.Add(new ActionBinding(key, trigger));
+        }
+
+        _actionBindings[action] = bindings;
     }
 
-    public bool IsActionDown(InputAction action) => AnyBoundKey(action, IsKeyDown);
-    public bool IsActionPressed(InputAction action) => AnyBoundKey(action, IsKeyPressed);
-    public bool IsActionReleased(InputAction action) => AnyBoundKey(action, IsKeyReleased);
+    public void BindAction(InputAction action, params Keys[] keys)
+    {
+        BindAction(action, InputTrigger.Down, keys);
+    }
+
+    public bool IsAction(InputAction action)
+    {
+        if (!_actionBindings.TryGetValue(action, out var bindings) || bindings.Count == 0)
+        {
+            return false;
+        }
+
+        foreach (var binding in bindings)
+        {
+            if (Matches(binding))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     public void Update(GameTime gameTime)
     {
@@ -67,27 +92,32 @@ public class InputService : IUpdatable
 
     public InputService()
     {
-        BindAction(InputAction.Exit, Keys.Escape);
-        BindAction(InputAction.ToggleDebugPanel, Keys.OemTilde);
-        BindAction(InputAction.MoveForward, Keys.W);
-        BindAction(InputAction.MoveBackward, Keys.S);
-        BindAction(InputAction.MoveLeft, Keys.A);
-        BindAction(InputAction.MoveRight, Keys.D);
-        BindAction(InputAction.Run, Keys.LeftShift, Keys.RightShift);
+        BindAction(InputAction.Exit, InputTrigger.Down, Keys.Escape);
+        BindAction(InputAction.ToggleDebugPanel, InputTrigger.Pressed, Keys.OemTilde);
+        BindAction(InputAction.MoveForward, InputTrigger.Down, Keys.W);
+        BindAction(InputAction.MoveBackward, InputTrigger.Down, Keys.S);
+        BindAction(InputAction.MoveLeft, InputTrigger.Down, Keys.A);
+        BindAction(InputAction.MoveRight, InputTrigger.Down, Keys.D);
+        BindAction(InputAction.Run, InputTrigger.Down, Keys.LeftShift, Keys.RightShift);
     }
 
-    private bool AnyBoundKey(InputAction action, Func<Keys, bool> predicate)
+    private bool Matches(ActionBinding binding)
     {
-        if (!_actionBindings.TryGetValue(action, out var keys) || keys.Count == 0)
+        return binding.Trigger switch
         {
-            return false;
-        }
-
-        foreach (var key in keys)
-        {
-            if (predicate(key)) return true;
-        }
-
-        return false;
+            InputTrigger.Down => IsKeyDown(binding.Key),
+            InputTrigger.Pressed => IsKeyPressed(binding.Key),
+            InputTrigger.Released => IsKeyReleased(binding.Key),
+            _ => false
+        };
     }
+
+    private readonly record struct ActionBinding(Keys Key, InputTrigger Trigger);
+}
+
+public enum InputTrigger
+{
+    Down,
+    Pressed,
+    Released
 }

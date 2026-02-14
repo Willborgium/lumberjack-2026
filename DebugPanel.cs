@@ -37,7 +37,7 @@ public class DebugPanel(InputService inputService) : IUpdatable, IDebugger, IDis
 
     public void Update(GameTime gameTime)
     {
-        if (inputService.IsActionPressed(InputAction.ToggleDebugPanel))
+        if (inputService.IsAction(InputAction.ToggleDebugPanel))
         {
             Visible = !Visible;
         }
