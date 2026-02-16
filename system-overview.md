@@ -5,11 +5,18 @@
 - `Driver` owns global services (`InputService`, `ResourceManager`, `StateManager`) and delegates update/render.
 - `StateManager` hosts the active `IState`, updates input first, then state logic, then debug UI.
 - `BaseState` provides shared world rendering flow and common service access for concrete states.
-- Current runtime uses `DemoState` as the active gameplay/demo state.
+- Current runtime uses `GameState` as the active gameplay state.
 - Source is organized into folder groups:
-  - `States` for state contracts/implementations
-  - `Services/Systems` for runtime service and simulation systems
-  - `Core` for shared engine primitives, geometry, and abstractions
+  - `States` (`Lumberjack.States`) for state contracts/implementations
+  - `Services/Systems` (`Lumberjack.Services.Systems`) for runtime service and simulation systems
+  - `Core` (`Lumberjack.Core`) for shared engine primitives, geometry, and abstractions
+- Namespace declarations are now aligned to those folder groups across the active codebase.
+
+## Tooling Workflow
+
+- VS Code workspace settings enable C# format-on-save in `.vscode/settings.json`.
+- A basic pre-commit linter hook is configured in `.githooks/pre-commit` and runs `dotnet format analyzers` against the solution at error severity.
+- Repository hooks path is expected to be `.githooks` (`git config core.hooksPath .githooks`).
 
 ## Rendering Pipeline
 
@@ -18,6 +25,12 @@
 - `Renderable3DBase.SetState` is used as an optional per-object state override hook; default culling is `CullCounterClockwiseFace`.
 - `BaseState.Render` includes a basic behind-camera skip (`EnableBehindCameraCulling`) that omits draw calls for objects whose positions are behind the camera forward vector.
 - Effects are parameter-driven (`World`, `View`, `Projection`, optional `Texture`) and are generally cloned per renderable.
+- `Renderable3D` selects cel-shading techniques (`CelColor`/`CelTextured`) when they are present.
+
+## Shader Model
+
+- Added reusable cel-shading effect (`Content/Effects/CelShadingEffect.fx`) with quantized lighting.
+- Effect includes both textured and non-textured techniques so the same effect asset can be used across renderable variants.
 
 ## Resource and Ownership Model
 
@@ -77,7 +90,16 @@
   - object↔object rules
   - type↔type rules
   - object↔type rules
-- Basic response currently reports collision count/last pair to debug stats and logs contacts to `DebugLog`.
+- Collision listener registration supports:
+  - object↔object listeners
+  - type↔type listeners
+  - object↔type listeners
+- Listeners receive `CollisionDetails` payloads with ids, types, positions, and shapes.
+- Collision shapes can be derived from `Renderable3D` vertex data via:
+  - `BoxCollisionShape.FromRenderable(...)`
+  - `SphereCollisionShape.FromRenderable(...)`
+  - `CapsuleCollisionShape.FromRenderable(...)`
+- Basic response still reports collision count/last pair to debug stats and logs contacts to `DebugLog`.
 
 ## Debugging
 

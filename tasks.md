@@ -1,13 +1,6 @@
 # To Do
 
-- Make vs code apply formatting to a file on save
-- Introduce basic linter as pre-commit hook
-- Update namespaces to match folder structure
-- Introduce basic cell-shading effect that can be applied to anything
-- Allow passing in a Renderable3D to a collision shape and have it determine the volume for that collision shape based on the vertices
-- Update collision system to register listeners
-  - Listens can listen to object-to-object, object-to-type, or type-to-type collisions
-  - Listeners receive details about what collided
+- (none)
 
 # Suggestions
 
@@ -17,6 +10,9 @@
 4. Add click-hit feedback (outline/highlight) so picks are visible without opening logs.
 5. Add occlusion-aware third-person camera collision handling against environment bounds.
 6. Replace position-only behind-camera culling with bounds-aware frustum culling to reduce pop-in on large meshes.
+7. Raise pre-commit lint severity to include warnings after the existing analyzer backlog is addressed.
+8. Add configurable cel-shading band count and rim-light parameters per material/effect instance.
+9. Add optional cooldown/debounce settings for collision listeners that only need discrete enter events.
 
 # Completed
 
@@ -58,3 +54,11 @@
 
 15. Update all of the demo models to use a different texture from the new textures we've added — `cab2c67`
 16. Place all of the demo models on the ground instead of floating in the sky at different positions — `cab2c67`
+17. Make vs code apply formatting to a file on save — `d7a0813`
+18. Introduce basic linter as pre-commit hook — `d7a0813`
+19. Update namespaces to match folder structure — `ddf97b8`
+20. Introduce basic cell-shading effect that can be applied to anything — `ddf97b8`
+21. Allow passing in a `Renderable3D` to a collision shape and have it determine the volume for that collision shape based on the vertices — `ddf97b8`
+22. Update collision system to register listeners
+   1. listeners can listen to object-to-object, object-to-type, or type-to-type collisions
+   2. listeners receive details about what collided — `ddf97b8`
