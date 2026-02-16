@@ -4,26 +4,32 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace Lumberjack;
 
-public class GameState : BaseState
+public class DemoState : BaseState
 {
     protected override void OnLoad(ContentManager content, GraphicsDevice graphicsDevice)
     {
-        var colorEffect = Resources.GetContent<Effect>(ContentPaths.ColorEffect);
+        var textureEffect = Resources.GetContent<Effect>(ContentPaths.TextureEffect);
 
-        var playerCube = TestFunctions.CreateCube(colorEffect.Clone());
-        playerCube.Position = new Vector3(0f, 0f, 0f);
+        var cubeTexture = Resources.GetContent<Texture2D>(ContentPaths.BrickTexture);
+        var sphereTexture = Resources.GetContent<Texture2D>(ContentPaths.MetalTexture);
+        var pyramidTexture = Resources.GetContent<Texture2D>(ContentPaths.WoodTexture);
+        var prismTexture = Resources.GetContent<Texture2D>(ContentPaths.StoneTexture);
+        var floorTexture = Resources.GetContent<Texture2D>(ContentPaths.TileTexture);
+
+        var playerCube = TestFunctions.CreateTexturedCube(textureEffect.Clone(), cubeTexture, size: 1f);
+        playerCube.Position = new Vector3(-3.0f, 0.5f, 0f);
         Renderables.Add(playerCube);
 
-        var sphere = TestFunctions.CreateSphere(colorEffect.Clone(), 10, 14, 0.9f);
-        sphere.Position = new Vector3(2.2f, 0f, 0f);
+        var sphere = TestFunctions.CreateTexturedSphere(textureEffect.Clone(), sphereTexture, 10, 14, 0.9f);
+        sphere.Position = new Vector3(0f, 0.9f, 0f);
         Renderables.Add(sphere);
 
-        var pyramid = TestFunctions.CreatePyramid(colorEffect.Clone(), 0.9f, 1.4f);
-        pyramid.Position = new Vector3(0f, 1.6f, 0f);
+        var pyramid = TestFunctions.CreateTexturedPyramid(textureEffect.Clone(), pyramidTexture, 0.9f, 1.4f);
+        pyramid.Position = new Vector3(3.0f, 0f, 0f);
         Renderables.Add(pyramid);
 
-        var prism = TestFunctions.CreateRectangularPrism(colorEffect.Clone(), 1.6f, 0.8f, 0.6f);
-        prism.Position = new Vector3(0f, -1.6f, 0f);
+        var prism = TestFunctions.CreateTexturedRectangularPrism(textureEffect.Clone(), prismTexture, 1.6f, 0.8f, 0.6f);
+        prism.Position = new Vector3(0f, 0.4f, 3.0f);
         Renderables.Add(prism);
 
         var spinner = new Spinner();
@@ -32,12 +38,10 @@ public class GameState : BaseState
         spinner.AddTarget(prism);
         Updatables.Add(spinner);
 
-        var textureEffect = Resources.GetContent<Effect>(ContentPaths.TextureEffect);
-        var floorTexture = Resources.GetContent<Texture2D>(ContentPaths.GrassTexture);
         var floor = TestFunctions.CreateTexturedPlane(textureEffect.Clone(), floorTexture, 120f, 120f, 24);
         floor.CullMode = CullMode.None;
 
-        floor.Position = new Vector3(0f, -2.2f, 0f);
+        floor.Position = Vector3.Zero;
         Renderables.Add(floor);
 
         var thirdPersonCamera = new ThirdPersonCamera(playerCube, Input)

@@ -51,9 +51,27 @@ public abstract class BaseState : IState, IDisposable
 
         var view = Camera.GetViewMatrix();
         var projection = GetProjection(graphicsDevice);
+        var cameraForward = Camera.Target - Camera.Position;
+        if (cameraForward.LengthSquared() > 0.000001f)
+        {
+            cameraForward.Normalize();
+        }
+        else
+        {
+            cameraForward = Vector3.Forward;
+        }
 
         foreach (var renderable in Renderables)
         {
+            if (renderable.EnableBehindCameraCulling)
+            {
+                var toRenderable = renderable.Position - Camera.Position;
+                if (Vector3.Dot(cameraForward, toRenderable) <= 0f)
+                {
+                    continue;
+                }
+            }
+
             PushRenderState(graphicsDevice);
             try
             {
