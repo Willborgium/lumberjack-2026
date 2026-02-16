@@ -25,11 +25,11 @@ public class ValueBinder<T>(Func<T> valueFunc, Action<T> setValueFunc) : IUpdata
 
 public class GameState : BaseState, IPlayerState
 {
-    public int WoodCount { get; set; } = 0;
+    public int WoodCount { get; set; }
 
     protected override void OnLoad(ContentManager content, GraphicsDevice graphicsDevice)
     {
-        var textureEffect = Resources.GetContent<Effect>(ContentPaths.CelShadingEffect);
+        var textureEffect = Resources.GetContent<Effect>(ContentPaths.TextureEffect);
 
         var cubeTexture = Resources.GetContent<Texture2D>(ContentPaths.BrickTexture);
         var playerMesh = TestFunctions.CreateTexturedRectangularPrism(textureEffect.Clone(), cubeTexture, 1f, 3f, 1f);
@@ -92,17 +92,22 @@ public class GameState : BaseState, IPlayerState
         var collisionSystem = new CollisionSystem(SetDebugStat);
 
         collisionSystem.Register(new CollisionBody("player-mesh", "player", playerMesh, BoxCollisionShape.FromRenderable(playerMesh)));
-        collisionSystem.Register(new CollisionBody("tree-mesh", "inanimate-object", treeMesh, CapsuleCollisionShape.FromRenderable(treeMesh, padding: 0.1f)));
+        collisionSystem.Register(new CollisionBody("tree-mesh", "tree", treeMesh, CapsuleCollisionShape.FromRenderable(treeMesh, padding: 0.1f)));
         collisionSystem.Register(new CollisionBody("camera", "camera", thirdPersonCamera, new SphereCollisionShape(Radius: 0.5f, Offset: Vector3.Zero)));
         collisionSystem.Register(new CollisionBody("floor", "environment", floor, new BoxCollisionShape(HalfExtents: new Vector3(60f, 0.25f, 60f), Offset: new Vector3(0f, -0.25f, 0f))));
 
-        collisionSystem.SetTypePairRule("inanimate-object", "environment", canCollide: false);
-        collisionSystem.SetTypePairRule("inanimate-object", "inanimate-object", canCollide: false);
+        collisionSystem.SetTypePairRule("tree", "environment", canCollide: false);
+        collisionSystem.SetTypePairRule("tree", "tree", canCollide: false);
         collisionSystem.SetTypePairRule("environment", "environment", canCollide: false);
         collisionSystem.SetObjectPairRule("camera", "floor", canCollide: false);
+
         collisionSystem.AddObjectPairListener("player-mesh", "tree-mesh", details => DebugLog.Log($"Listener object-object: {details.LeftObjectId}<->{details.RightObjectId}"));
-        collisionSystem.AddObjectTypeListener("player-mesh", "inanimate-object", details => DebugLog.Log($"Listener object-type: {details.LeftObjectId} vs {details.RightType}"));
-        collisionSystem.AddTypePairListener("player", "inanimate-object", details => DebugLog.Log($"Listener type-type: {details.LeftType}<->{details.RightType}"));
+        collisionSystem.AddObjectTypeListener("player-mesh", "tree", details => DebugLog.Log($"Listener object-type: {details.LeftObjectId} vs {details.RightType}"));
+        collisionSystem.AddTypePairListener("player", "tree", details => DebugLog.Log($"Listener type-type: {details.LeftType}<->{details.RightType}"));
+
+        // handling collision will be tricky
+        // we might need to rethink how all of this works
+        // events need to be sent for collision entered and collision exited for most things to work properly
 
         Updatables.Add(collisionSystem);
 

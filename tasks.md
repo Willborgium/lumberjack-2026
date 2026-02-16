@@ -60,5 +60,5 @@
 20. Introduce basic cell-shading effect that can be applied to anything — `ddf97b8`
 21. Allow passing in a `Renderable3D` to a collision shape and have it determine the volume for that collision shape based on the vertices — `ddf97b8`
 22. Update collision system to register listeners
-   1. listeners can listen to object-to-object, object-to-type, or type-to-type collisions
-   2. listeners receive details about what collided — `ddf97b8`
+23. listeners can listen to object-to-object, object-to-type, or type-to-type collisions
+24. listeners receive details about what collided — `ddf97b8`

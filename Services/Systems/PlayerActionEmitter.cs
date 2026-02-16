@@ -21,9 +21,11 @@ public class PlayerActionEmitter(InputService input) : IActionEmitter<PlayerActi
 
 public class PlayerActionHandler(IActionEmitter<PlayerAction> emitter, IPlayerState playerState) : IUpdatable
 {
+    public bool IsPlayerNearTree { get; set; }
+
     public void Update(GameTime gameTime)
     {
-        if (emitter.IsActive(PlayerAction.Interact))
+        if (IsPlayerNearTree && emitter.IsActive(PlayerAction.Interact))
         {
             playerState.WoodCount += 1;
         }
