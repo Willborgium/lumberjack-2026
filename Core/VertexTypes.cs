@@ -1,7 +1,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace Lumberjack
+namespace Lumberjack.Core
 {
     public struct VertexPositionNormalColor : IVertexType
     {

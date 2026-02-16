@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework.Content;
 
-namespace Lumberjack;
+namespace Lumberjack.Services.Systems;
 
 public class ResourceManager(ContentManager content) : IDisposable
 {

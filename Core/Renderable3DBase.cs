@@ -1,8 +1,9 @@
 using System;
+using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace Lumberjack;
+namespace Lumberjack.Core;
 
 public abstract class Renderable3DBase(Effect effect) : IDisposable, ITranslatable
 {
@@ -35,6 +36,12 @@ public abstract class Renderable3DBase(Effect effect) : IDisposable, ITranslatab
     public virtual bool SetState(GraphicsDevice graphicsDevice) { return false; }
 
     public abstract void Draw(GraphicsDevice graphicsDevice, Matrix view, Matrix projection);
+
+    public virtual bool TryGetLocalVertices(out IReadOnlyList<Vector3> vertices)
+    {
+        vertices = Array.Empty<Vector3>();
+        return false;
+    }
 
     public void Translate(Vector3 delta)
     {

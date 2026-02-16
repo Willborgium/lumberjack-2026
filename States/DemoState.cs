@@ -2,13 +2,13 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace Lumberjack;
+namespace Lumberjack.States;
 
 public class DemoState : BaseState
 {
     protected override void OnLoad(ContentManager content, GraphicsDevice graphicsDevice)
     {
-        var textureEffect = Resources.GetContent<Effect>(ContentPaths.TextureEffect);
+        var textureEffect = Resources.GetContent<Effect>(ContentPaths.CelShadingEffect);
 
         var cubeTexture = Resources.GetContent<Texture2D>(ContentPaths.BrickTexture);
         var sphereTexture = Resources.GetContent<Texture2D>(ContentPaths.MetalTexture);
@@ -81,16 +81,19 @@ public class DemoState : BaseState
         Updatables.Add(npcApplier);
 
         var collisionSystem = new CollisionSystem(SetDebugStat);
-        collisionSystem.Register(new CollisionBody("player-cube", "player", playerCube, new BoxCollisionShape(HalfExtents: new Vector3(0.9f), Offset: Vector3.Zero)));
+        collisionSystem.Register(new CollisionBody("player-cube", "player", playerCube, BoxCollisionShape.FromRenderable(playerCube)));
         collisionSystem.Register(new CollisionBody("camera", "camera", thirdPersonCamera, new SphereCollisionShape(Radius: 0.5f, Offset: Vector3.Zero)));
-        collisionSystem.Register(new CollisionBody("npc-prism", "npc", prism, new BoxCollisionShape(HalfExtents: new Vector3(0.8f, 0.4f, 0.3f), Offset: Vector3.Zero)));
-        collisionSystem.Register(new CollisionBody("sphere", "obstacle", sphere, new SphereCollisionShape(Radius: 0.95f, Offset: Vector3.Zero)));
-        collisionSystem.Register(new CollisionBody("pyramid", "obstacle", pyramid, new CapsuleCollisionShape(radius: 0.5f, halfHeight: 0.7f, offset: new Vector3(0f, 0.35f, 0f))));
+        collisionSystem.Register(new CollisionBody("npc-prism", "npc", prism, BoxCollisionShape.FromRenderable(prism)));
+        collisionSystem.Register(new CollisionBody("sphere", "obstacle", sphere, SphereCollisionShape.FromRenderable(sphere)));
+        collisionSystem.Register(new CollisionBody("pyramid", "obstacle", pyramid, CapsuleCollisionShape.FromRenderable(pyramid)));
         collisionSystem.Register(new CollisionBody("floor", "environment", floor, new BoxCollisionShape(HalfExtents: new Vector3(60f, 0.25f, 60f), Offset: new Vector3(0f, -0.25f, 0f))));
 
         collisionSystem.SetTypePairRule("environment", "environment", canCollide: false);
         collisionSystem.SetObjectTypeRule("npc-prism", "environment", canCollide: false);
         collisionSystem.SetObjectPairRule("camera", "floor", canCollide: false);
+        collisionSystem.AddObjectPairListener("player-cube", "npc-prism", details => DebugLog.Log($"Listener object-object: {details.LeftObjectId}<->{details.RightObjectId}"));
+        collisionSystem.AddObjectTypeListener("player-cube", "obstacle", details => DebugLog.Log($"Listener object-type: {details.LeftObjectId} vs {details.RightType}"));
+        collisionSystem.AddTypePairListener("player", "obstacle", details => DebugLog.Log($"Listener type-type: {details.LeftType}<->{details.RightType}"));
 
         Updatables.Add(collisionSystem);
 

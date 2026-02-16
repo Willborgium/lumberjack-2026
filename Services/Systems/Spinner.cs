@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 
-namespace Lumberjack;
+namespace Lumberjack.Services.Systems;
 
 public class Spinner : IUpdatable
 {

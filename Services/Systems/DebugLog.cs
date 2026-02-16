@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Lumberjack;
+namespace Lumberjack.Services.Systems;
 
 public static class DebugLog
 {

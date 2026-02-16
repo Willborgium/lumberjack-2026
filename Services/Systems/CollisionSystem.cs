@@ -2,13 +2,72 @@ using System;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 
-namespace Lumberjack;
+namespace Lumberjack.Services.Systems;
+
+internal static class CollisionShapeFactoryHelpers
+{
+    public static (Vector3 Min, Vector3 Max, Vector3 Center) ComputeLocalBounds(Renderable3DBase renderable)
+    {
+        if (!renderable.TryGetLocalVertices(out var vertices) || vertices.Count == 0)
+        {
+            throw new InvalidOperationException("Renderable does not expose local vertices for collision shape derivation.");
+        }
+
+        var min = new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
+        var max = new Vector3(float.MinValue, float.MinValue, float.MinValue);
+
+        foreach (var vertex in vertices)
+        {
+            var scaled = Vector3.Multiply(vertex, renderable.Scale);
+            min = Vector3.Min(min, scaled);
+            max = Vector3.Max(max, scaled);
+        }
+
+        var center = (min + max) * 0.5f;
+        return (min, max, center);
+    }
+}
 
 public abstract record CollisionShape(Vector3 Offset);
 
-public sealed record SphereCollisionShape(float Radius, Vector3 Offset) : CollisionShape(Offset);
+public sealed record SphereCollisionShape(float Radius, Vector3 Offset) : CollisionShape(Offset)
+{
+    public static SphereCollisionShape FromRenderable(Renderable3DBase renderable, float padding = 0f)
+    {
+        var (_, max, center) = CollisionShapeFactoryHelpers.ComputeLocalBounds(renderable);
+        var radius = 0f;
 
-public sealed record BoxCollisionShape(Vector3 HalfExtents, Vector3 Offset) : CollisionShape(Offset);
+        if (renderable.TryGetLocalVertices(out var vertices))
+        {
+            foreach (var vertex in vertices)
+            {
+                var scaled = Vector3.Multiply(vertex, renderable.Scale);
+                var dist = Vector3.Distance(center, scaled);
+                if (dist > radius)
+                {
+                    radius = dist;
+                }
+            }
+        }
+        else
+        {
+            radius = Vector3.Distance(center, max);
+        }
+
+        return new SphereCollisionShape(radius + padding, center);
+    }
+}
+
+public sealed record BoxCollisionShape(Vector3 HalfExtents, Vector3 Offset) : CollisionShape(Offset)
+{
+    public static BoxCollisionShape FromRenderable(Renderable3DBase renderable, Vector3? padding = null)
+    {
+        var (min, max, center) = CollisionShapeFactoryHelpers.ComputeLocalBounds(renderable);
+        var extents = (max - min) * 0.5f;
+        extents += padding ?? Vector3.Zero;
+        return new BoxCollisionShape(extents, center);
+    }
+}
 
 public sealed record CapsuleCollisionShape(float Radius, float HalfHeight, Vector3 Offset, Vector3 Up) : CollisionShape(Offset)
 {
@@ -16,7 +75,27 @@ public sealed record CapsuleCollisionShape(float Radius, float HalfHeight, Vecto
         : this(radius, halfHeight, offset, Vector3.Up)
     {
     }
+
+    public static CapsuleCollisionShape FromRenderable(Renderable3DBase renderable, float padding = 0f)
+    {
+        var (min, max, center) = CollisionShapeFactoryHelpers.ComputeLocalBounds(renderable);
+        var extents = (max - min) * 0.5f;
+
+        var radius = MathF.Max(extents.X, extents.Z) + padding;
+        var halfHeight = MathF.Max(0f, extents.Y - radius * 0.5f);
+        return new CapsuleCollisionShape(radius, halfHeight, center);
+    }
 }
+
+public readonly record struct CollisionDetails(
+    string LeftObjectId,
+    string LeftType,
+    string RightObjectId,
+    string RightType,
+    Vector3 LeftPosition,
+    Vector3 RightPosition,
+    CollisionShape LeftShape,
+    CollisionShape RightShape);
 
 public sealed class CollisionBody(string id, string type, ITranslatable target, CollisionShape shape)
 {
@@ -32,6 +111,9 @@ public class CollisionSystem(Action<string, string> setDebugStat) : IUpdatable
     private readonly Dictionary<(string, string), bool> _objectPairRules = [];
     private readonly Dictionary<(string, string), bool> _typePairRules = [];
     private readonly Dictionary<(string, string), bool> _objectTypeRules = [];
+    private readonly Dictionary<(string, string), List<Action<CollisionDetails>>> _objectPairListeners = [];
+    private readonly Dictionary<(string, string), List<Action<CollisionDetails>>> _typePairListeners = [];
+    private readonly Dictionary<(string, string), List<Action<CollisionDetails>>> _objectTypeListeners = [];
 
     public void Register(CollisionBody body)
     {
@@ -52,6 +134,21 @@ public class CollisionSystem(Action<string, string> setDebugStat) : IUpdatable
     public void SetObjectTypeRule(string objectId, string type, bool canCollide)
     {
         _objectTypeRules[(objectId, type)] = canCollide;
+    }
+
+    public void AddObjectPairListener(string objectA, string objectB, Action<CollisionDetails> listener)
+    {
+        AddListener(_objectPairListeners, CanonicalPair(objectA, objectB), listener);
+    }
+
+    public void AddTypePairListener(string typeA, string typeB, Action<CollisionDetails> listener)
+    {
+        AddListener(_typePairListeners, CanonicalPair(typeA, typeB), listener);
+    }
+
+    public void AddObjectTypeListener(string objectId, string type, Action<CollisionDetails> listener)
+    {
+        AddListener(_objectTypeListeners, (objectId, type), listener);
     }
 
     public void Update(GameTime gameTime)
@@ -79,6 +176,18 @@ public class CollisionSystem(Action<string, string> setDebugStat) : IUpdatable
                 collisions++;
                 last = $"{a.Id} <-> {b.Id}";
                 DebugLog.Log($"Collision: {last}");
+
+                var details = new CollisionDetails(
+                    a.Id,
+                    a.Type,
+                    b.Id,
+                    b.Type,
+                    a.Target.Position,
+                    b.Target.Position,
+                    a.Shape,
+                    b.Shape);
+
+                NotifyListeners(details);
             }
         }
 
@@ -318,4 +427,49 @@ public class CollisionSystem(Action<string, string> setDebugStat) : IUpdatable
     {
         return string.CompareOrdinal(left, right) <= 0 ? (left, right) : (right, left);
     }
+
+    private static void AddListener(Dictionary<(string, string), List<Action<CollisionDetails>>> listeners, (string, string) key, Action<CollisionDetails> listener)
+    {
+        ArgumentNullException.ThrowIfNull(listener);
+
+        if (!listeners.TryGetValue(key, out var list))
+        {
+            list = [];
+            listeners[key] = list;
+        }
+
+        list.Add(listener);
+    }
+
+    private void NotifyListeners(CollisionDetails details)
+    {
+        if (_objectPairListeners.TryGetValue(CanonicalPair(details.LeftObjectId, details.RightObjectId), out var objectListeners))
+        {
+            InvokeListeners(objectListeners, details);
+        }
+
+        if (_typePairListeners.TryGetValue(CanonicalPair(details.LeftType, details.RightType), out var typeListeners))
+        {
+            InvokeListeners(typeListeners, details);
+        }
+
+        if (_objectTypeListeners.TryGetValue((details.LeftObjectId, details.RightType), out var leftObjectTypeListeners))
+        {
+            InvokeListeners(leftObjectTypeListeners, details);
+        }
+
+        if (_objectTypeListeners.TryGetValue((details.RightObjectId, details.LeftType), out var rightObjectTypeListeners))
+        {
+            InvokeListeners(rightObjectTypeListeners, details);
+        }
+    }
+
+    private static void InvokeListeners(List<Action<CollisionDetails>> listeners, CollisionDetails details)
+    {
+        foreach (var listener in listeners)
+        {
+            listener(details);
+        }
+    }
+
 }

@@ -5,7 +5,7 @@ using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using SharpDX.Win32;
 
-namespace Lumberjack;
+namespace Lumberjack.Services.Systems;
 
 public static class ResourceLoader
 {

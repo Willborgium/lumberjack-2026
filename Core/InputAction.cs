@@ -1,4 +1,4 @@
-namespace Lumberjack;
+namespace Lumberjack.Core;
 
 public enum InputAction
 {

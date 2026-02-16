@@ -38,6 +38,12 @@
 /processorParam:DebugMode=Auto
 /build:Effects/TextureEffect.fx
 
+#begin Effects/CelShadingEffect.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:DebugMode=Auto
+/build:Effects/CelShadingEffect.fx
+
 #begin grass.jpg
 /importer:TextureImporter
 /processor:TextureProcessor

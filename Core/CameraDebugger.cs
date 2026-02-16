@@ -1,7 +1,7 @@
 using System;
 using Microsoft.Xna.Framework;
 
-namespace Lumberjack;
+namespace Lumberjack.Core;
 
 public class CameraDebugger(ICamera camera, Action<string, string> SetDebugStat) : IUpdatable
 {

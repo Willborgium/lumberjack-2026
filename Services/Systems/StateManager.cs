@@ -3,7 +3,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace Lumberjack;
+namespace Lumberjack.Services.Systems;
 
 public class StateManager(ResourceManager resources, InputService inputService) : IDisposable
 {

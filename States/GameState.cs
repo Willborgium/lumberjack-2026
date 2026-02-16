@@ -3,7 +3,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace Lumberjack;
+namespace Lumberjack.States;
 
 public class DebugWatcher(string key, Func<object> valueFunc, Action<string, string> setDebugStatFunc) : IUpdatable
 {
@@ -29,7 +29,7 @@ public class GameState : BaseState, IPlayerState
 
     protected override void OnLoad(ContentManager content, GraphicsDevice graphicsDevice)
     {
-        var textureEffect = Resources.GetContent<Effect>(ContentPaths.TextureEffect);
+        var textureEffect = Resources.GetContent<Effect>(ContentPaths.CelShadingEffect);
 
         var cubeTexture = Resources.GetContent<Texture2D>(ContentPaths.BrickTexture);
         var playerMesh = TestFunctions.CreateTexturedRectangularPrism(textureEffect.Clone(), cubeTexture, 1f, 3f, 1f);
@@ -91,8 +91,8 @@ public class GameState : BaseState, IPlayerState
 
         var collisionSystem = new CollisionSystem(SetDebugStat);
 
-        collisionSystem.Register(new CollisionBody("player-mesh", "player", playerMesh, new BoxCollisionShape(HalfExtents: new Vector3(0.5f, 1.5f, 0.5f), Offset: Vector3.Zero)));
-        collisionSystem.Register(new CollisionBody("tree-mesh", "inanimate-object", treeMesh, new BoxCollisionShape(HalfExtents: new Vector3(0.25f, 5f, 0.25f), Offset: Vector3.Zero)));
+        collisionSystem.Register(new CollisionBody("player-mesh", "player", playerMesh, BoxCollisionShape.FromRenderable(playerMesh)));
+        collisionSystem.Register(new CollisionBody("tree-mesh", "inanimate-object", treeMesh, CapsuleCollisionShape.FromRenderable(treeMesh, padding: 0.1f)));
         collisionSystem.Register(new CollisionBody("camera", "camera", thirdPersonCamera, new SphereCollisionShape(Radius: 0.5f, Offset: Vector3.Zero)));
         collisionSystem.Register(new CollisionBody("floor", "environment", floor, new BoxCollisionShape(HalfExtents: new Vector3(60f, 0.25f, 60f), Offset: new Vector3(0f, -0.25f, 0f))));
 
@@ -100,6 +100,9 @@ public class GameState : BaseState, IPlayerState
         collisionSystem.SetTypePairRule("inanimate-object", "inanimate-object", canCollide: false);
         collisionSystem.SetTypePairRule("environment", "environment", canCollide: false);
         collisionSystem.SetObjectPairRule("camera", "floor", canCollide: false);
+        collisionSystem.AddObjectPairListener("player-mesh", "tree-mesh", details => DebugLog.Log($"Listener object-object: {details.LeftObjectId}<->{details.RightObjectId}"));
+        collisionSystem.AddObjectTypeListener("player-mesh", "inanimate-object", details => DebugLog.Log($"Listener object-type: {details.LeftObjectId} vs {details.RightType}"));
+        collisionSystem.AddTypePairListener("player", "inanimate-object", details => DebugLog.Log($"Listener type-type: {details.LeftType}<->{details.RightType}"));
 
         Updatables.Add(collisionSystem);
 

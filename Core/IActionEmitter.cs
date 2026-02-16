@@ -1,6 +1,6 @@
 using Microsoft.Xna.Framework;
 
-namespace Lumberjack;
+namespace Lumberjack.Core;
 
 public interface IActionEmitter<TAction> : IUpdatable
 {

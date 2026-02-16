@@ -1,6 +1,6 @@
 using Microsoft.Xna.Framework;
 
-namespace Lumberjack;
+namespace Lumberjack.Services.Systems;
 
 public class TranslationApplier(ITranslatable target, GroundMovementTranslator translator) : IUpdatable
 {

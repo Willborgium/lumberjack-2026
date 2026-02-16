@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 
-namespace Lumberjack;
+namespace Lumberjack.Services.Systems;
 
 public class InputService : IUpdatable
 {

@@ -1,9 +1,10 @@
-namespace Lumberjack;
+namespace Lumberjack.Core;
 
 public static class ContentPaths
 {
     public const string ColorEffect = "Effects/ColorEffect";
     public const string TextureEffect = "Effects/TextureEffect";
+    public const string CelShadingEffect = "Effects/CelShadingEffect";
     public const string SkyboxEffect = "Effects/SkyboxEffect";
 
     public const string GrassTexture = "grass";
