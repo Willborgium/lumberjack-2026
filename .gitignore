@@ -28,6 +28,9 @@ obj/**/Content/
 
 # VS Code
 .vscode/
+!.vscode/
+.vscode/*
+!.vscode/settings.json
 
 # NuGet
 packages/

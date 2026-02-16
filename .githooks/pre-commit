@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_root="$(git rev-parse --show-toplevel)"
+cd "$repo_root"
+
+dotnet format analyzers lumberjack.sln --verify-no-changes --severity error --no-restore
