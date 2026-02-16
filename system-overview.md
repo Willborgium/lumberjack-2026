@@ -5,12 +5,18 @@
 - `Driver` owns global services (`InputService`, `ResourceManager`, `StateManager`) and delegates update/render.
 - `StateManager` hosts the active `IState`, updates input first, then state logic, then debug UI.
 - `BaseState` provides shared world rendering flow and common service access for concrete states.
+- Current runtime uses `DemoState` as the active gameplay/demo state.
+- Source is organized into folder groups:
+  - `States` for state contracts/implementations
+  - `Services/Systems` for runtime service and simulation systems
+  - `Core` for shared engine primitives, geometry, and abstractions
 
 ## Rendering Pipeline
 
 - Renderables inherit from `Renderable3DBase` and implement `Draw(GraphicsDevice, view, projection)`.
 - `BaseState.Render` now uses a per-renderable render-state stack (`DepthStencilState`, `RasterizerState`, `BlendState`, `SamplerState[0]`) to prevent state leakage.
 - `Renderable3DBase.SetState` is used as an optional per-object state override hook; default culling is `CullCounterClockwiseFace`.
+- `BaseState.Render` includes a basic behind-camera skip (`EnableBehindCameraCulling`) that omits draw calls for objects whose positions are behind the camera forward vector.
 - Effects are parameter-driven (`World`, `View`, `Projection`, optional `Texture`) and are generally cloned per renderable.
 
 ## Resource and Ownership Model
@@ -38,10 +44,19 @@
 - Camera implementations now split into:
   - `POVCamera` (preserved first-person implementation)
   - `ThirdPersonCamera` (active gameplay camera with smoothing)
-- Demo wiring in `GameState`:
+- Demo wiring in `DemoState`:
   - player cube movement uses `InputMovementActionEmitter`
   - NPC prism movement uses `PatternMovementActionEmitter` for scripted motion
   - `ThirdPersonCamera` follows the player cube and provides movement frame vectors
+
+## Content Pipeline and Textures
+
+- `Content/textures` now includes normalized naming:
+  - lowercase directories/files
+  - kebab-case naming
+  - `512x512` directory/file segments normalized to `512`
+- All textures under `Content/textures/512` are registered in `Content.mgcb`.
+- `DemoState` now uses multiple imported texture assets for different demo models (cube/sphere/pyramid/prism/floor) to exercise texture variety.
 
 ## Click Selection System
 
