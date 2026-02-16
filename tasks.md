@@ -3,6 +3,11 @@
 - Make vs code apply formatting to a file on save
 - Introduce basic linter as pre-commit hook
 - Update namespaces to match folder structure
+- Introduce basic cell-shading effect that can be applied to anything
+- Allow passing in a Renderable3D to a collision shape and have it determine the volume for that collision shape based on the vertices
+- Update collision system to register listeners
+  - Listens can listen to object-to-object, object-to-type, or type-to-type collisions
+  - Listeners receive details about what collided
 
 # Suggestions
 

@@ -2,7 +2,7 @@ using Microsoft.Xna.Framework;
 
 namespace Lumberjack;
 
-public class PatternMovementActionEmitter(float segmentDurationSeconds = 2f) : IMovementActionEmitter
+public class PatternMovementActionEmitter(float segmentDurationSeconds = 2f) : IActionEmitter<MovementAction>
 {
     private float _timer;
 

@@ -8,3 +8,8 @@ public enum MovementAction
     Right,
     Run
 }
+
+public enum PlayerAction
+{
+    Interact,
+}

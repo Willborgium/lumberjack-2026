@@ -2,7 +2,7 @@ using Microsoft.Xna.Framework;
 
 namespace Lumberjack;
 
-public class GroundMovementTranslator(IMovementActionEmitter emitter, IMovementFrameProvider frameProvider) : IUpdatable
+public class GroundMovementTranslator(IActionEmitter<MovementAction> emitter, IMovementFrameProvider frameProvider) : IUpdatable
 {
     public float MoveSpeed { get; set; } = 4f;
     public float RunMultiplier { get; set; } = 2.5f;

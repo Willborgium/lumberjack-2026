@@ -9,5 +9,6 @@ public enum InputAction
     MoveBackward,
     MoveLeft,
     MoveRight,
-    Run
+    Run,
+    Interact,
 }

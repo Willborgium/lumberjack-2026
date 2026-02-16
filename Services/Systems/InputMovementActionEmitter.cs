@@ -2,7 +2,7 @@ using Microsoft.Xna.Framework;
 
 namespace Lumberjack;
 
-public class InputMovementActionEmitter(InputService input) : IMovementActionEmitter
+public class InputMovementActionEmitter(InputService input) : IActionEmitter<MovementAction>
 {
     public bool IsActive(MovementAction action)
     {

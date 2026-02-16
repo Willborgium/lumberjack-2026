@@ -116,6 +116,7 @@ public class InputService : IUpdatable
         BindAction(InputAction.MoveRight, InputTrigger.Down, Keys.D);
         BindAction(InputAction.Run, InputTrigger.Down, Keys.LeftShift, Keys.RightShift);
         BindAction(InputAction.PrimaryClick, InputTrigger.Pressed, MouseButton.Left);
+        BindAction(InputAction.Interact, InputTrigger.Pressed, Keys.E);
     }
 
     private bool Matches(ActionBinding binding)
