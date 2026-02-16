@@ -1,6 +1,8 @@
 # To Do
 
-- (none)
+- Make vs code apply formatting to a file on save
+- Introduce basic linter as pre-commit hook
+- Update namespaces to match folder structure
 
 # Suggestions
 
@@ -38,12 +40,16 @@
 11. clickability should be defined by a clickable updatable being registered with a target that can be clicked, and a receiver that does something when it is clicked. this system will look similar to the camera movement system. — `3096181`
 12. Add basic rendering optimization to skip rendering objects behind the camera — `cab2c67`
 13. Organize files into basic folders
-   - States
-   - Services/Systems
-   - Core — `cab2c67`
+
+- States
+- Services/Systems
+- Core — `cab2c67`
+
 14. Add all of the textures in the Content/textures subdirectories to the content pipeline
-   - lowercase and kebab-case all of the folder and file names
-   - replace occurances of 512x512 with just 512 (since we assume textures are square)
-   - example: Content/textures/512x512/Brick/Brick_01-512x512.png should become Content/textures/512/brick/brick-01-512.png — `cab2c67`
+
+- lowercase and kebab-case all of the folder and file names
+- replace occurances of 512x512 with just 512 (since we assume textures are square)
+- example: Content/textures/512x512/Brick/Brick_01-512x512.png should become Content/textures/512/brick/brick-01-512.png — `cab2c67`
+
 15. Update all of the demo models to use a different texture from the new textures we've added — `cab2c67`
 16. Place all of the demo models on the ground instead of floating in the sky at different positions — `cab2c67`

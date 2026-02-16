@@ -12,7 +12,7 @@ public class DemoState : BaseState
 
         var cubeTexture = Resources.GetContent<Texture2D>(ContentPaths.BrickTexture);
         var sphereTexture = Resources.GetContent<Texture2D>(ContentPaths.MetalTexture);
-        var pyramidTexture = Resources.GetContent<Texture2D>(ContentPaths.WoodTexture);
+        var pyramidTexture = Resources.GetContent<Texture2D>(ContentPaths.Wood3Texture);
         var prismTexture = Resources.GetContent<Texture2D>(ContentPaths.StoneTexture);
         var floorTexture = Resources.GetContent<Texture2D>(ContentPaths.TileTexture);
 
@@ -40,6 +40,7 @@ public class DemoState : BaseState
 
         var floor = TestFunctions.CreateTexturedPlane(textureEffect.Clone(), floorTexture, 120f, 120f, 24);
         floor.CullMode = CullMode.None;
+        floor.EnableBehindCameraCulling = false;
 
         floor.Position = Vector3.Zero;
         Renderables.Add(floor);

@@ -1,0 +1,11 @@
+- organize changes into clean, atomic commits
+- make sure the project builds successfully before completing a task
+- use modern C# semantics
+- implement IDisposable whenever it is warranted
+- Keep tasks.md up to date as you make progress
+- Include commit hash when moving a task from To Do to Completed
+- Always output plans to markdown files in agent-plans directory
+- always update system-overview.md with a compact description of all design decisions and details of the system
+- always include suggestions of small improvements by adding them to the suggestions section of tasks.md
+- suggest if an idea is very strange compared to industry standard design patterns for something, but don't assume you know better than the user
+- comments explain why, not what. include comments where necessary

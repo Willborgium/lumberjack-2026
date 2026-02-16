@@ -38,7 +38,7 @@ public class Driver : Game
 
     protected override void LoadContent()
     {
-        var gameState = new DemoState();
+        var gameState = new GameState();
         _stateManager.SetState(gameState, Content, GraphicsDevice);
     }
 
